@@ -1,0 +1,20 @@
+@theme {
+  --color-background: #F2F0EB;
+  --color-foreground: #1A1B1F;
+  --color-card: #FFFFFF;
+  --color-primary: #1E3A5F;
+  --color-primary-foreground: #FFFFFF;
+  --color-accent: #C4770A;
+  --color-accent-foreground: #FFFFFF;
+  --color-secondary: #EEF3F8;
+  --color-muted: #E8E5DF;
+  --color-muted-foreground: #6B6860;
+  --color-border: rgba(26, 27, 31, 0.12);
+  --color-destructive: #C0392B;
+
+  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, monospace;
+  --font-display: "Fraunces", "Georgia", serif;
+
+  --radius-sm: 0.1875rem;
+}

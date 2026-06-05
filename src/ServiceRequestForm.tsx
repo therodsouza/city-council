@@ -1,0 +1,189 @@
+import { useState, useRef } from 'react';
+import { Wrench } from 'lucide-react';
+import { FormData, Step } from './types/form';
+import { User } from './contexts/AuthContext';
+import Sidebar from './components/Sidebar';
+import StepLocation from './components/StepLocation';
+import StepIssue from './components/StepIssue';
+import StepContact from './components/StepContact';
+import StepReview from './components/StepReview';
+import SuccessScreen from './components/SuccessScreen';
+import { buildServiceRequestPayload, submitServiceRequest } from './services/ServiceRequestService';
+
+interface Props {
+  user: User | null;
+  onProfileClick: () => void;
+}
+
+function generateRef() {
+  return `SR-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 90000) + 10000)}`;
+}
+
+export function ServiceRequestForm({ user, onProfileClick }: Props) {
+  const [step, setStep] = useState<Step>(1);
+  const [submitted, setSubmitted] = useState(false);
+  const [form, setForm] = useState<FormData>({
+    address: '',
+    suburb: '',
+    postcode: '',
+    locationNote: '',
+    siteType: '',
+    category: '',
+    severity: '',
+    description: '',
+    photoName: '',
+    name: user?.name || '',
+    email: user?.email || '',
+    phone: '',
+    receiveUpdates: true,
+    agreeTerms: false,
+  });
+  const [photoUrl, setPhotoUrl] = useState('');
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const refNum = useRef(generateRef());
+
+  const setVal = (key: keyof FormData, value: string | boolean) => {
+    setForm(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleReset = () => {
+    setForm({
+      address: '',
+      suburb: '',
+      postcode: '',
+      locationNote: '',
+      siteType: '',
+      category: '',
+      severity: '',
+      description: '',
+      photoName: '',
+      name: user?.name || '',
+      email: user?.email || '',
+      phone: '',
+      receiveUpdates: true,
+      agreeTerms: false,
+    });
+    setPhotoUrl('');
+    setPhotoFile(null);
+    setStep(1);
+    setSubmitted(false);
+    refNum.current = generateRef();
+  };
+
+  const date = new Date().toLocaleDateString('en-AU', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+
+  return (
+    <div className="min-h-screen bg-background font-sans flex flex-col">
+      <header className="bg-primary text-primary-foreground py-4">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-accent flex items-center justify-center flex-shrink-0">
+              <Wrench className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <div className="text-xs font-mono uppercase tracking-widest opacity-50">
+                City Council
+              </div>
+              <div className="text-lg font-display font-semibold">
+                Public Works & Infrastructure
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:block text-right">
+              <div className="text-xs font-mono uppercase tracking-wide opacity-70">
+                Online Services
+              </div>
+              <div className="text-sm opacity-90">{date}</div>
+            </div>
+            {user && (
+              <button
+                type="button"
+                onClick={onProfileClick}
+                className="flex items-center gap-2 px-3 py-2 rounded-sm bg-primary-foreground/10 hover:bg-primary-foreground/20 transition-colors border border-primary-foreground/20"
+                title="View Profile"
+                aria-label="View your profile"
+              >
+                <img
+                  src={user.photo}
+                  alt={user.name}
+                  className="w-7 h-7 rounded-sm border border-primary-foreground/30"
+                />
+                <span className="hidden md:block text-sm text-primary-foreground font-medium">
+                  {user.name.split(' ')[0]}
+                </span>
+              </button>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-8">
+        {submitted ? (
+          <SuccessScreen form={form} refNum={refNum.current} onReset={handleReset} />
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-[272px_1fr] gap-8">
+            <aside className="lg:sticky lg:top-8 self-start">
+              <Sidebar step={step} onStepClick={setStep} />
+            </aside>
+            <div className="bg-card border border-border rounded-sm">
+              {step === 1 && (
+                <StepLocation form={form} setVal={setVal} onNext={() => setStep(2)} />
+              )}
+              {step === 2 && (
+                <StepIssue
+                  form={form}
+                  setVal={setVal}
+                  photoUrl={photoUrl}
+                  setPhotoUrl={setPhotoUrl}
+                  setPhotoFile={setPhotoFile}
+                  onNext={() => setStep(3)}
+                  onBack={() => setStep(1)}
+                />
+              )}
+              {step === 3 && (
+                <StepContact
+                  form={form}
+                  setVal={setVal}
+                  onNext={() => setStep(4)}
+                  onBack={() => setStep(2)}
+                />
+              )}
+              {step === 4 && (
+                <StepReview
+                  form={form}
+                  setVal={setVal}
+                  photoUrl={photoUrl}
+                  onBack={() => setStep(3)}
+                  onSubmit={async () => {
+                    const payload = buildServiceRequestPayload(form, refNum.current);
+                    await submitServiceRequest(payload, photoFile);
+                    setSubmitted(true);
+                  }}
+                  onEdit={setStep}
+                />
+              )}
+            </div>
+          </div>
+        )}
+      </main>
+
+      <footer className="border-t border-border py-6">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
+          <span className="font-mono">
+            © {new Date().getFullYear()} City Council. All rights reserved.
+          </span>
+          <div className="flex gap-6">
+            <a href="#" className="hover:text-foreground transition-colors">Terms of Service</a>
+            <a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a>
+            <a href="#" className="hover:text-foreground transition-colors">Accessibility</a>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
