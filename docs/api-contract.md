@@ -1,88 +1,75 @@
-# Backend API Contract
+Backend API Contract
+Base URL configured via VITE_API_URL in the frontend (e.g. https://api.example.com).
 
-Base URL configured via `VITE_API_URL` in the frontend (e.g. `https://api.example.com`).
+All endpoints accept and return application/json. CORS must allow the frontend origin.
 
-All endpoints accept and return `application/json`. CORS must allow the frontend origin.
+All endpoints require a JWT bearer token:
 
----
+Authorization: Bearer <token>
+Any request without a valid token receives 401 Unauthorized.
 
-## Endpoints
+Error response shape
+All non-2xx responses return:
 
-### 1. Reverse Geocode
+{ "message": "Human-readable description of the error" }
+The frontend reads response.message and displays it to the user.
 
+Endpoints
+1. Reverse Geocode
 Translates GPS coordinates into a human-readable address. Called when the user clicks "Use my location" in the location step.
 
-```
 GET /geocode/reverse
-```
+Authorization: Bearer <token>
+Query parameters
 
-**Query parameters**
+Parameter	Type	Required	Description
+lat	float	yes	Latitude (decimal degrees)
+lng	float	yes	Longitude (decimal degrees)
+Success response — 200 OK
 
-| Parameter | Type   | Required | Description              |
-|-----------|--------|----------|--------------------------|
-| `lat`     | float  | yes      | Latitude (decimal degrees)  |
-| `lng`     | float  | yes      | Longitude (decimal degrees) |
-
-**Success response — `200 OK`**
-
-```json
 {
   "address": "42 Harbour Road",
   "suburb": "Northbridge",
   "postcode": "6003"
 }
-```
+Field	Type	Description
+address	string	Street number and street name
+suburb	string	Suburb or locality name
+postcode	string	Postal code as a string
+Error responses
 
-| Field     | Type   | Description                         |
-|-----------|--------|-------------------------------------|
-| `address` | string | Street number and street name       |
-| `suburb`  | string | Suburb or locality name             |
-| `postcode`| string | Postal code as a string             |
-
-**Error responses**
-
-| Status | When                                              |
-|--------|---------------------------------------------------|
-| `400`  | `lat` or `lng` is missing or not a valid number   |
-| `404`  | Coordinates fall outside a serviceable area       |
-| `502`  | Upstream geocoding provider is unavailable        |
-
----
-
-### 2. Submit Service Request
-
+Status	When
+400	lat or lng is missing or not a valid number
+401	Missing or invalid JWT
+502	Upstream geocoding provider is unavailable
+2. Submit Service Request
 Accepts a completed infrastructure report from the public form. Called on final submission after the user agrees to terms.
 
-```
 POST /service-requests
+Authorization: Bearer <token>
 Content-Type: multipart/form-data
-```
+Request parts
 
-**Request parts**
+Part	Content-Type	Required	Description
+data	application/json	yes	JSON-encoded service request payload (see below)
+photo	image/*	no	Image file captured or uploaded by the user
+data field — JSON schema
 
-| Part    | Content-Type       | Required | Description                                      |
-|---------|--------------------|----------|--------------------------------------------------|
-| `data`  | `application/json` | yes      | JSON-encoded service request payload (see below) |
-| `photo` | `image/*`          | no       | Image file captured or uploaded by the user      |
-
-**`data` field — JSON schema**
-
-```json
 {
-  "referenceNumber": "SR-2026-12345",
   "submittedAt": "2026-06-04T08:30:00.000Z",
   "location": {
     "address": "42 Harbour Road",
     "suburb": "Northbridge",
     "postcode": "6003",
+    "lat": -31.9505,
+    "lng": 115.8605,
     "siteType": "Road / Street",
     "notes": "Adjacent to the bus shelter on the eastern footpath."
   },
   "issue": {
     "category": "pothole",
     "severity": "high",
-    "description": "Large pothole approximately 30cm wide causing damage to vehicles.",
-    "photoName": "IMG_0042.jpg"
+    "description": "Large pothole approximately 30cm wide causing damage to vehicles."
   },
   "contact": {
     "name": "Jane Smith",
@@ -91,65 +78,66 @@ Content-Type: multipart/form-data
     "receiveUpdates": true
   }
 }
-```
+Field reference
 
-**Field reference**
+submittedAt — ISO 8601 UTC timestamp of when the user clicked Submit.
 
-`referenceNumber` — Client-generated identifier in the format `SR-{year}-{5-digit random}`. Store as-is; it is shown to the user on the success screen.
+location.lat / location.lng — Optional. Decimal-degree coordinates. Present when the user clicked "Use my location"; absent for manual address entry. Used for geospatial indexing.
 
-`submittedAt` — ISO 8601 UTC timestamp of when the user clicked Submit.
+location.siteType — One of the values below (free-text string, validated by the frontend):
 
-`location.siteType` — One of the values below (free-text string, validated by the frontend):
-- `Road / Street`
-- `Footpath / Pathway`
-- `Park / Reserve`
-- `Public Building`
-- `Stormwater / Drain`
-- `Street Lighting`
-- `Public Toilet`
-- `Other`
+Road / Street
+Footpath / Pathway
+Park / Reserve
+Public Building
+Stormwater / Drain
+Street Lighting
+Public Toilet
+Other
+issue.category — One of:
 
-`issue.category` — One of:
-- `pothole` — Pothole / Road Damage
-- `graffiti` — Graffiti / Vandalism
-- `broken` — Broken Equipment
-- `flooding` — Flooding / Water Damage
-- `lighting` — Street Light Outage
-- `trees` — Fallen Tree / Branch
-- `dumping` — Illegal Dumping / Litter
-- `other` — Other Infrastructure
+pothole — Pothole / Road Damage
+graffiti — Graffiti / Vandalism
+broken — Broken Equipment
+flooding — Flooding / Water Damage
+lighting — Street Light Outage
+trees — Fallen Tree / Branch
+dumping — Illegal Dumping / Litter
+other — Other Infrastructure
+issue.severity — One of: low, medium, high
 
-`issue.severity` — One of: `low`, `medium`, `high`
+contact.phone — Optional. May be empty string.
 
-`issue.photoName` — Optional. Filename of the attached photo, mirroring the `photo` part's filename. Present in `data` when the `photo` part is also included.
+contact.receiveUpdates — If true, the user has opted in to status email notifications at contact.email. Not yet implemented — the flag is stored but no emails are sent.
 
-`contact.phone` — Optional. May be empty string.
+Sending the data part from a browser
 
-`contact.receiveUpdates` — If `true`, the backend should send status email notifications to `contact.email`.
+The data part must be sent as a Blob with Content-Type: application/json — not as a plain string. A plain string field has no content-type and the server will reject it.
 
-**Success response — `201 Created`**
+const formData = new FormData()
+formData.append('data', new Blob([JSON.stringify(payload)], { type: 'application/json' }), 'data.json')
+if (photo) formData.append('photo', photo, photo.name)
+Photo part
 
-```json
+When included, the backend reads the filename from the Content-Disposition header of the photo part. Do not include a photoName field in the data JSON.
+
+Success response — 201 Created
+
 {
-  "referenceNumber": "SR-2026-12345"
+  "referenceNumber": "SR-2026-12345",
+  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 }
-```
+referenceNumber is generated by the server in the format SR-{year}-{5-digit random}. The frontend reads it from this response and shows it on the success screen.
 
-The frontend does not read this body, but returning the reference number is useful for logging and future extension.
+id is the internal UUID for the record. The frontend does not need it; it is included for debugging and future use.
 
-**Error responses**
+Error responses
 
-| Status | When                                              |
-|--------|---------------------------------------------------|
-| `400`  | Request body fails validation (missing required fields, unknown enum value) |
-| `409`  | `referenceNumber` already exists                  |
-| `422`  | Business-logic rejection (e.g. location outside jurisdiction) |
-| `500`  | Unexpected server error                           |
-
----
-
-## Notes
-
-- The frontend checks only `response.ok` (status 200–299). Any non-2xx status causes the submit button to throw; the user sees a generic browser error. If you want a user-readable error message, a future iteration will need to read the response body — coordinate before adding that.
-- `referenceNumber` is generated client-side for now. The backend should treat it as the authoritative ID (idempotency key) rather than generating its own.
-- No authentication header is sent with either request. Both endpoints are currently public.
+Status	When
+400	Request body fails validation (missing required fields, unknown enum value)
+401	Missing or invalid JWT
+500	Unexpected server error
+Notes
+Both endpoints require JWT auth. No unauthenticated access is permitted.
+referenceNumber is server-generated. The frontend must not generate or send it; read it from the 201 response body.
+contact.receiveUpdates is stored but email delivery is not yet implemented. Do not communicate to the user that they will receive emails until this is wired up.

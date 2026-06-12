@@ -42,12 +42,13 @@ export interface AuthenticationService {
   initiateGoogleAuth(): Promise<string>;
   completeGoogleAuth(code: string, state: string): Promise<GoogleUserProfile>;
   completeGoogleAuthImplicit(idToken: string, accessToken: string, state: string): Promise<GoogleUserProfile>;
-  
+
   // Session management
   getCurrentUser(): Promise<GoogleUserProfile | null>;
   getAwsCredentials(): Promise<AWS.Credentials | null>;
   getCognitoIdentityId(): Promise<string | null>;
   isAuthenticated(): Promise<boolean>;
+  getIdToken(): Promise<string | null>;
   
   // Token management
   refreshTokens(): Promise<void>;
@@ -278,6 +279,11 @@ export class AuthenticationServiceImpl implements AuthenticationService {
       this.cleanupOAuthParameters();
       throw errorHandler.classifyError(error, 'AuthenticationService.completeGoogleAuthImplicit');
     }
+  }
+
+  async getIdToken(): Promise<string | null> {
+    const tokens = await this.tokenHandler.getStoredTokens();
+    return tokens?.googleIdToken ?? null;
   }
 
   /**

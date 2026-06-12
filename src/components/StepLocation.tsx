@@ -19,10 +19,11 @@ const SITE_TYPES = [
 interface Props {
   form: FormData;
   setVal: (key: keyof FormData, value: string | boolean) => void;
+  setCoords: (lat: number, lng: number) => void;
   onNext: () => void;
 }
 
-export default function StepLocation({ form, setVal, onNext }: Props) {
+export default function StepLocation({ form, setVal, setCoords, onNext }: Props) {
   const canProceed = !!(form.address.trim() && form.suburb.trim() && form.siteType);
   const geo = useGeolocation();
   const [geocoding, setGeocoding] = useState(false);
@@ -38,6 +39,7 @@ export default function StepLocation({ form, setVal, onNext }: Props) {
         setVal('address', result.address);
         setVal('suburb', result.suburb);
         setVal('postcode', result.postcode);
+        setCoords(coords.latitude, coords.longitude);
       } catch {
         setGeocodeError('Could not look up address. Please enter it manually.');
       } finally {

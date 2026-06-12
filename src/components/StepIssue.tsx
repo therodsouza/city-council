@@ -55,6 +55,7 @@ interface Props {
 export default function StepIssue({ form, setVal, photoUrl, setPhotoUrl, setPhotoFile, onNext, onBack }: Props) {
   const [dragOver, setDragOver] = useState(false);
   const [compressing, setCompressing] = useState(false);
+  const [fileName, setFileName] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
 
@@ -73,7 +74,7 @@ export default function StepIssue({ form, setVal, photoUrl, setPhotoUrl, setPhot
         maxWidthOrHeight: 1920,
         useWebWorker: true,
       });
-      setVal('photoName', file.name);
+      setFileName(file.name);
       setPhotoUrl(URL.createObjectURL(compressed));
       setPhotoFile(compressed);
     } finally {
@@ -146,7 +147,7 @@ export default function StepIssue({ form, setVal, photoUrl, setPhotoUrl, setPhot
             <div className="absolute bottom-0 left-0 right-0 p-3 flex items-center justify-between">
               <div className="flex items-center gap-2 text-white min-w-0">
                 <Camera className="w-4 h-4 flex-shrink-0" />
-                <span className="text-sm truncate">{form.photoName}</span>
+                <span className="text-sm truncate">{fileName}</span>
               </div>
               <button
                 type="button"
@@ -158,7 +159,7 @@ export default function StepIssue({ form, setVal, photoUrl, setPhotoUrl, setPhot
             </div>
             <button
               type="button"
-              onClick={() => { setVal('photoName', ''); setPhotoUrl(''); setPhotoFile(null); }}
+              onClick={() => { setFileName(''); setPhotoUrl(''); setPhotoFile(null); }}
               className="absolute top-2 right-2 w-7 h-7 bg-black/40 text-white flex items-center justify-center rounded-sm hover:bg-black/60 transition-colors"
             >
               <X className="w-4 h-4" />

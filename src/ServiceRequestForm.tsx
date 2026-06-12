@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { Wrench } from 'lucide-react';
 import { FormData, Step } from './types/form';
 import { User } from './contexts/AuthContext';
@@ -15,59 +15,49 @@ interface Props {
   onProfileClick: () => void;
 }
 
-function generateRef() {
-  return `SR-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 90000) + 10000)}`;
-}
+const EMPTY_FORM: Omit<FormData, 'name' | 'email'> = {
+  address: '',
+  suburb: '',
+  postcode: '',
+  locationNote: '',
+  siteType: '',
+  category: '',
+  severity: '',
+  description: '',
+  phone: '',
+  receiveUpdates: true,
+  agreeTerms: false,
+};
 
 export function ServiceRequestForm({ user, onProfileClick }: Props) {
   const [step, setStep] = useState<Step>(1);
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [referenceNumber, setReferenceNumber] = useState('');
   const [form, setForm] = useState<FormData>({
-    address: '',
-    suburb: '',
-    postcode: '',
-    locationNote: '',
-    siteType: '',
-    category: '',
-    severity: '',
-    description: '',
-    photoName: '',
+    ...EMPTY_FORM,
     name: user?.name || '',
     email: user?.email || '',
-    phone: '',
-    receiveUpdates: true,
-    agreeTerms: false,
   });
   const [photoUrl, setPhotoUrl] = useState('');
   const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const refNum = useRef(generateRef());
 
   const setVal = (key: keyof FormData, value: string | boolean) => {
     setForm(prev => ({ ...prev, [key]: value }));
   };
 
+  const setCoords = (lat: number, lng: number) => {
+    setForm(prev => ({ ...prev, lat, lng }));
+  };
+
   const handleReset = () => {
-    setForm({
-      address: '',
-      suburb: '',
-      postcode: '',
-      locationNote: '',
-      siteType: '',
-      category: '',
-      severity: '',
-      description: '',
-      photoName: '',
-      name: user?.name || '',
-      email: user?.email || '',
-      phone: '',
-      receiveUpdates: true,
-      agreeTerms: false,
-    });
+    setForm({ ...EMPTY_FORM, name: user?.name || '', email: user?.email || '' });
     setPhotoUrl('');
     setPhotoFile(null);
     setStep(1);
     setSubmitted(false);
-    refNum.current = generateRef();
+    setSubmitError(null);
+    setReferenceNumber('');
   };
 
   const date = new Date().toLocaleDateString('en-AU', {
@@ -124,7 +114,7 @@ export function ServiceRequestForm({ user, onProfileClick }: Props) {
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-8">
         {submitted ? (
-          <SuccessScreen form={form} refNum={refNum.current} onReset={handleReset} />
+          <SuccessScreen form={form} refNum={referenceNumber} onReset={handleReset} />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-[272px_1fr] gap-8">
             <aside className="lg:sticky lg:top-8 self-start">
@@ -132,7 +122,7 @@ export function ServiceRequestForm({ user, onProfileClick }: Props) {
             </aside>
             <div className="bg-card border border-border rounded-sm">
               {step === 1 && (
-                <StepLocation form={form} setVal={setVal} onNext={() => setStep(2)} />
+                <StepLocation form={form} setVal={setVal} setCoords={setCoords} onNext={() => setStep(2)} />
               )}
               {step === 2 && (
                 <StepIssue
@@ -160,11 +150,18 @@ export function ServiceRequestForm({ user, onProfileClick }: Props) {
                   photoUrl={photoUrl}
                   onBack={() => setStep(3)}
                   onSubmit={async () => {
-                    const payload = buildServiceRequestPayload(form, refNum.current);
-                    await submitServiceRequest(payload, photoFile);
-                    setSubmitted(true);
+                    setSubmitError(null);
+                    try {
+                      const payload = buildServiceRequestPayload(form);
+                      const refNum = await submitServiceRequest(payload, photoFile);
+                      setReferenceNumber(refNum);
+                      setSubmitted(true);
+                    } catch (e: unknown) {
+                      setSubmitError(e instanceof Error ? e.message : 'Submission failed. Please try again.');
+                    }
                   }}
                   onEdit={setStep}
+                  submitError={submitError}
                 />
               )}
             </div>

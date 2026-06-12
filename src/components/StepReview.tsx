@@ -64,9 +64,10 @@ interface Props {
   onBack: () => void;
   onSubmit: () => void;
   onEdit: (s: Step) => void;
+  submitError?: string | null;
 }
 
-export default function StepReview({ form, setVal, onBack, onSubmit, onEdit }: Props) {
+export default function StepReview({ form, setVal, photoUrl, onBack, onSubmit, onEdit, submitError }: Props) {
   return (
     <div>
       <div className="px-8 py-6 border-b border-border">
@@ -89,7 +90,7 @@ export default function StepReview({ form, setVal, onBack, onSubmit, onEdit }: P
           <ReviewRow label="Category" value={CATEGORY_LABELS[form.category] ?? form.category} />
           <ReviewRow label="Severity" value={SEVERITY_LABELS[form.severity] ?? form.severity} />
           <ReviewRow label="Description" value={form.description} />
-          {form.photoName && <ReviewRow label="Photo" value={form.photoName} />}
+          {photoUrl && <ReviewRow label="Photo" value="Photo attached" />}
         </ReviewSection>
 
         <ReviewSection title="Your Details" onEdit={() => onEdit(3)}>
@@ -122,6 +123,12 @@ export default function StepReview({ form, setVal, onBack, onSubmit, onEdit }: P
           </span>
         </label>
       </div>
+
+      {submitError && (
+        <div className="mx-8 mb-2 px-4 py-2.5 bg-red-50 border border-red-200 rounded-sm text-sm text-red-700">
+          {submitError}
+        </div>
+      )}
 
       <div className="px-8 py-4 border-t border-border flex items-center justify-between">
         <button

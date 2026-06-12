@@ -1,3 +1,5 @@
+import { authenticationService } from './AuthenticationService';
+
 const API_URL = import.meta.env.VITE_API_URL as string | undefined;
 
 export interface ReverseGeocodeResult {
@@ -6,7 +8,6 @@ export interface ReverseGeocodeResult {
   postcode: string;
 }
 
-// GET /geocode/reverse?lat={lat}&lng={lng}
 export async function reverseGeocode(
   lat: number,
   lng: number,
@@ -14,13 +15,21 @@ export async function reverseGeocode(
   if (!API_URL) {
     throw new Error('VITE_API_URL is not configured.');
   }
+
+  const idToken = await authenticationService.getIdToken();
+
   const url = new URL(`${API_URL}/geocode/reverse`);
   url.searchParams.set('lat', String(lat));
   url.searchParams.set('lng', String(lng));
 
-  const response = await fetch(url.toString());
+  const response = await fetch(url.toString(), {
+    headers: idToken ? { Authorization: `Bearer ${idToken}` } : {},
+  });
+
   if (!response.ok) {
-    throw new Error(`Reverse geocode failed: ${response.status} ${response.statusText}`);
+    const err = await response.json().catch(() => ({})) as { message?: string };
+    throw new Error(err.message ?? `Reverse geocode failed: ${response.status} ${response.statusText}`);
   }
+
   return response.json() as Promise<ReverseGeocodeResult>;
 }
