@@ -1,60 +1,93 @@
-Backend API Contract
-Base URL configured via VITE_API_URL in the frontend (e.g. https://api.example.com).
+# Backend API Contract
 
-All endpoints accept and return application/json. CORS must allow the frontend origin.
+Base URL configured via `VITE_API_URL` in the frontend (e.g. `https://api.example.com`).
+
+All endpoints accept and return `application/json`. CORS must allow the frontend origin.
 
 All endpoints require a JWT bearer token:
 
+```
 Authorization: Bearer <token>
-Any request without a valid token receives 401 Unauthorized.
+```
 
-Error response shape
+Any request without a valid token receives `401 Unauthorized`.
+
+## Error response shape
+
 All non-2xx responses return:
 
+```json
 { "message": "Human-readable description of the error" }
-The frontend reads response.message and displays it to the user.
+```
 
-Endpoints
-1. Reverse Geocode
+The frontend reads `response.message` and displays it to the user.
+
+---
+
+## Endpoints
+
+### 1. Reverse Geocode
+
 Translates GPS coordinates into a human-readable address. Called when the user clicks "Use my location" in the location step.
 
+```
 GET /geocode/reverse
 Authorization: Bearer <token>
-Query parameters
+```
 
-Parameter	Type	Required	Description
-lat	float	yes	Latitude (decimal degrees)
-lng	float	yes	Longitude (decimal degrees)
-Success response — 200 OK
+**Query parameters**
 
+| Parameter | Type  | Required | Description                 |
+|-----------|-------|----------|-----------------------------|
+| `lat`     | float | yes      | Latitude (decimal degrees)  |
+| `lng`     | float | yes      | Longitude (decimal degrees) |
+
+**Success response — `200 OK`**
+
+```json
 {
   "address": "42 Harbour Road",
   "suburb": "Northbridge",
   "postcode": "6003"
 }
-Field	Type	Description
-address	string	Street number and street name
-suburb	string	Suburb or locality name
-postcode	string	Postal code as a string
-Error responses
+```
 
-Status	When
-400	lat or lng is missing or not a valid number
-401	Missing or invalid JWT
-502	Upstream geocoding provider is unavailable
-2. Submit Service Request
+| Field      | Type   | Description                   |
+|------------|--------|-------------------------------|
+| `address`  | string | Street number and street name |
+| `suburb`   | string | Suburb or locality name       |
+| `postcode` | string | Postal code as a string       |
+
+**Error responses**
+
+| Status | When                                            |
+|--------|-------------------------------------------------|
+| `400`  | `lat` or `lng` is missing or not a valid number |
+| `401`  | Missing or invalid JWT                          |
+| `502`  | Upstream geocoding provider is unavailable      |
+
+---
+
+### 2. Submit Service Request
+
 Accepts a completed infrastructure report from the public form. Called on final submission after the user agrees to terms.
 
+```
 POST /service-requests
 Authorization: Bearer <token>
 Content-Type: multipart/form-data
-Request parts
+```
 
-Part	Content-Type	Required	Description
-data	application/json	yes	JSON-encoded service request payload (see below)
-photo	image/*	no	Image file captured or uploaded by the user
-data field — JSON schema
+**Request parts**
 
+| Part    | Content-Type       | Required | Description                                      |
+|---------|--------------------|----------|--------------------------------------------------|
+| `data`  | `application/json` | yes      | JSON-encoded service request payload (see below) |
+| `photo` | `image/*`          | no       | Image file captured or uploaded by the user      |
+
+**`data` field — JSON schema**
+
+```json
 {
   "submittedAt": "2026-06-04T08:30:00.000Z",
   "location": {
@@ -78,66 +111,79 @@ data field — JSON schema
     "receiveUpdates": true
   }
 }
-Field reference
+```
 
-submittedAt — ISO 8601 UTC timestamp of when the user clicked Submit.
+**Field reference**
 
-location.lat / location.lng — Optional. Decimal-degree coordinates. Present when the user clicked "Use my location"; absent for manual address entry. Used for geospatial indexing.
+`submittedAt` — ISO 8601 UTC timestamp of when the user clicked Submit.
 
-location.siteType — One of the values below (free-text string, validated by the frontend):
+`location.lat` / `location.lng` — Optional. Decimal-degree coordinates. Present when the user clicked "Use my location"; absent for manual address entry. Used for geospatial indexing.
 
-Road / Street
-Footpath / Pathway
-Park / Reserve
-Public Building
-Stormwater / Drain
-Street Lighting
-Public Toilet
-Other
-issue.category — One of:
+`location.siteType` — One of the values below (free-text string, validated by the frontend):
+- `Road / Street`
+- `Footpath / Pathway`
+- `Park / Reserve`
+- `Public Building`
+- `Stormwater / Drain`
+- `Street Lighting`
+- `Public Toilet`
+- `Other`
 
-pothole — Pothole / Road Damage
-graffiti — Graffiti / Vandalism
-broken — Broken Equipment
-flooding — Flooding / Water Damage
-lighting — Street Light Outage
-trees — Fallen Tree / Branch
-dumping — Illegal Dumping / Litter
-other — Other Infrastructure
-issue.severity — One of: low, medium, high
+`issue.category` — One of:
+- `pothole` — Pothole / Road Damage
+- `graffiti` — Graffiti / Vandalism
+- `broken` — Broken Equipment
+- `flooding` — Flooding / Water Damage
+- `lighting` — Street Light Outage
+- `trees` — Fallen Tree / Branch
+- `dumping` — Illegal Dumping / Litter
+- `other` — Other Infrastructure
 
-contact.phone — Optional. May be empty string.
+`issue.severity` — One of: `low`, `medium`, `high`
 
-contact.receiveUpdates — If true, the user has opted in to status email notifications at contact.email. Not yet implemented — the flag is stored but no emails are sent.
+`contact.phone` — Optional. May be empty string.
 
-Sending the data part from a browser
+`contact.receiveUpdates` — If `true`, the user has opted in to status email notifications at `contact.email`. Not yet implemented — the flag is stored but no emails are sent.
 
-The data part must be sent as a Blob with Content-Type: application/json — not as a plain string. A plain string field has no content-type and the server will reject it.
+**Sending the `data` part from a browser**
 
+The `data` part must be sent as a `Blob` with `Content-Type: application/json` — not as a plain string. A plain string field has no content-type and the server will reject it.
+
+```js
 const formData = new FormData()
 formData.append('data', new Blob([JSON.stringify(payload)], { type: 'application/json' }), 'data.json')
 if (photo) formData.append('photo', photo, photo.name)
-Photo part
+```
 
-When included, the backend reads the filename from the Content-Disposition header of the photo part. Do not include a photoName field in the data JSON.
+**Photo part**
 
-Success response — 201 Created
+When included, the backend reads the filename from the `Content-Disposition` header of the `photo` part. Do not include a `photoName` field in the data JSON.
 
+**Success response — `201 Created`**
+
+```json
 {
   "referenceNumber": "SR-2026-12345",
   "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 }
-referenceNumber is generated by the server in the format SR-{year}-{5-digit random}. The frontend reads it from this response and shows it on the success screen.
+```
 
-id is the internal UUID for the record. The frontend does not need it; it is included for debugging and future use.
+`referenceNumber` is generated by the server in the format `SR-{year}-{5-digit random}`. The frontend reads it from this response and shows it on the success screen.
 
-Error responses
+`id` is the internal UUID for the record. The frontend does not need it; it is included for debugging and future use.
 
-Status	When
-400	Request body fails validation (missing required fields, unknown enum value)
-401	Missing or invalid JWT
-500	Unexpected server error
-Notes
-Both endpoints require JWT auth. No unauthenticated access is permitted.
-referenceNumber is server-generated. The frontend must not generate or send it; read it from the 201 response body.
-contact.receiveUpdates is stored but email delivery is not yet implemented. Do not communicate to the user that they will receive emails until this is wired up.
+**Error responses**
+
+| Status | When                                                                        |
+|--------|-----------------------------------------------------------------------------|
+| `400`  | Request body fails validation (missing required fields, unknown enum value) |
+| `401`  | Missing or invalid JWT                                                      |
+| `500`  | Unexpected server error                                                     |
+
+---
+
+## Notes
+
+- Both endpoints require JWT auth. No unauthenticated access is permitted.
+- `referenceNumber` is server-generated. The frontend must not generate or send it; read it from the `201` response body.
+- `contact.receiveUpdates` is stored but email delivery is not yet implemented. Do not communicate to the user that they will receive emails until this is wired up.
