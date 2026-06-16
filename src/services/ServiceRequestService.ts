@@ -52,6 +52,29 @@ export function buildServiceRequestPayload(form: AppFormData): ServiceRequestPay
   };
 }
 
+export interface ServiceRequestListItem {
+  id: string;
+  referenceNumber: string;
+  submittedAt: string;
+  createdAt: string;
+  status?: string;
+  address: string;
+  suburb: string;
+  postcode: string;
+  latitude: number | null;
+  longitude: number | null;
+  siteType: string;
+  locationNotes: string | null;
+  category: string;
+  severity: string;
+  issueDescription: string;
+  contactName: string;
+  contactEmail: string;
+  receiveUpdates: boolean;
+  imagePath: string | null;
+  geohash?: string;
+}
+
 const API_URL = import.meta.env.VITE_API_URL as string | undefined;
 
 export async function submitServiceRequest(
@@ -88,4 +111,23 @@ export async function submitServiceRequest(
 
   const data = await response.json() as { referenceNumber: string };
   return data.referenceNumber;
+}
+
+export async function getServiceRequests(): Promise<ServiceRequestListItem[]> {
+  if (!API_URL) {
+    return [];
+  }
+
+  const idToken = await authenticationService.getIdToken();
+
+  const response = await fetch(`${API_URL}/service-requests`, {
+    headers: idToken ? { Authorization: `Bearer ${idToken}` } : {},
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({})) as { message?: string };
+    throw new Error(err.message ?? `Failed to load requests: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json() as Promise<ServiceRequestListItem[]>;
 }

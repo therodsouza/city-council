@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   ArrowLeft, Search, ChevronRight, RefreshCw,
   HardHat, Paintbrush, Wrench, Droplets, Zap, Leaf, Trash2, Building2,
 } from 'lucide-react';
 import { User } from '../contexts/AuthContext';
 import { SiteHeader } from './SiteHeader';
+import { getServiceRequests, ServiceRequestListItem } from '../services/ServiceRequestService';
 
 type Status = 'received' | 'under_review' | 'in_progress' | 'resolved' | 'closed';
 
@@ -52,53 +53,30 @@ const CATEGORY_ICONS: Record<string, React.ElementType> = {
   other:    Building2,
 };
 
-const MOCK_REQUESTS: Request[] = [
-  {
-    referenceNumber: 'SR-2026-84231',
-    category: 'pothole',
-    categoryLabel: 'Pothole / Road Damage',
-    status: 'in_progress',
-    createdAt: new Date('2026-06-10'),
-    address: '142 Parramatta Road',
-    suburb: 'Homebush',
-  },
-  {
-    referenceNumber: 'SR-2026-71059',
-    category: 'lighting',
-    categoryLabel: 'Street Light Outage',
-    status: 'under_review',
-    createdAt: new Date('2026-06-05'),
-    address: '78 Victoria Street',
-    suburb: 'Strathfield',
-  },
-  {
-    referenceNumber: 'SR-2026-63388',
-    category: 'graffiti',
-    categoryLabel: 'Graffiti / Vandalism',
-    status: 'resolved',
-    createdAt: new Date('2026-05-22'),
-    address: '3 Church Street underpass',
-    suburb: 'Burwood',
-  },
-  {
-    referenceNumber: 'SR-2026-50014',
-    category: 'trees',
-    categoryLabel: 'Fallen Tree / Branch',
-    status: 'closed',
-    createdAt: new Date('2026-05-01'),
-    address: 'Concord Park, Allen Street',
-    suburb: 'Concord',
-  },
-  {
-    referenceNumber: 'SR-2026-44892',
-    category: 'dumping',
-    categoryLabel: 'Illegal Dumping / Litter',
-    status: 'received',
-    createdAt: new Date('2026-06-15'),
-    address: '19 Wattle Street',
-    suburb: 'Flemington',
-  },
-];
+const CATEGORY_LABELS: Record<string, string> = {
+  pothole:  'Pothole / Road Damage',
+  graffiti: 'Graffiti / Vandalism',
+  broken:   'Broken Equipment',
+  flooding: 'Flooding / Water Damage',
+  lighting: 'Street Light Outage',
+  trees:    'Fallen Tree / Branch',
+  dumping:  'Illegal Dumping / Litter',
+  other:    'Other Infrastructure',
+};
+
+function toRequest(item: ServiceRequestListItem): Request {
+  const category = item.category.toLowerCase();
+  const status = (item.status?.toLowerCase() ?? 'received') as Status;
+  return {
+    referenceNumber: item.referenceNumber,
+    category,
+    categoryLabel: CATEGORY_LABELS[category] ?? item.category,
+    status,
+    createdAt: new Date(item.createdAt),
+    address: item.address,
+    suburb: item.suburb,
+  };
+}
 
 function StatusBadge({ status }: { status: Status }) {
   const cfg = STATUS_CONFIG[status];
@@ -141,8 +119,22 @@ function RequestRow({ request }: { request: Request }) {
 export function TrackRequests({ user, onBack, onProfileClick }: TrackRequestsProps) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<Status | 'all'>('all');
+  const [requests, setRequests] = useState<Request[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filtered = MOCK_REQUESTS
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    setError(null);
+    getServiceRequests()
+      .then((items) => { if (!cancelled) setRequests(items.map(toRequest)); })
+      .catch((e: unknown) => { if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load requests.'); })
+      .finally(() => { if (!cancelled) setIsLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const filtered = requests
     .filter((r) => {
       const matchSearch =
         search === '' ||
@@ -154,7 +146,7 @@ export function TrackRequests({ user, onBack, onProfileClick }: TrackRequestsPro
     })
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
-  const countByStatus = (s: Status) => MOCK_REQUESTS.filter((r) => r.status === s).length;
+  const countByStatus = (s: Status) => requests.filter((r: Request) => r.status === s).length;
 
   const resultsLabel = (() => {
     const base = `${filtered.length} request${filtered.length !== 1 ? 's' : ''}`;
@@ -240,7 +232,23 @@ export function TrackRequests({ user, onBack, onProfileClick }: TrackRequestsPro
         </div>
 
         {/* Request list */}
-        {filtered.length > 0 ? (
+        {isLoading ? (
+          <div className="py-16 text-center">
+            <RefreshCw className="w-8 h-8 text-muted-foreground/30 mx-auto mb-3 animate-spin" />
+            <p className="text-sm text-muted-foreground">Loading your requests…</p>
+          </div>
+        ) : error ? (
+          <div className="py-16 text-center">
+            <p className="text-sm text-destructive mb-2">{error}</p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="text-sm text-foreground underline hover:text-primary transition-colors"
+            >
+              Try again
+            </button>
+          </div>
+        ) : filtered.length > 0 ? (
           <div className="border border-border rounded-sm bg-card">
             {filtered.map((r) => (
               <RequestRow key={r.referenceNumber} request={r} />
