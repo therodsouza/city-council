@@ -28,9 +28,10 @@ interface Props {
   form: FormData;
   refNum: string;
   onReset: () => void;
+  onTrackClick: () => void;
 }
 
-export default function SuccessScreen({ form, refNum, onReset }: Props) {
+export default function SuccessScreen({ form, refNum, onReset, onTrackClick }: Props) {
   const timeline = [
     {
       n: 1,
@@ -133,9 +134,10 @@ export default function SuccessScreen({ form, refNum, onReset }: Props) {
         </button>
         <button
           type="button"
-          className="px-6 py-2.5 border border-border bg-white text-foreground text-sm font-semibold rounded-sm hover:border-primary/40 transition-colors"
+          onClick={onTrackClick}
+          className="px-6 py-2.5 border border-border rounded-sm text-sm font-medium text-foreground hover:bg-muted/60 transition-colors"
         >
-          Return to Council Website
+          Track Your Requests
         </button>
       </div>
     </div>

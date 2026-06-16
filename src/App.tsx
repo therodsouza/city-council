@@ -3,10 +3,11 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Login } from './components/Login';
 import { Profile } from './components/Profile';
+import { TrackRequests } from './components/TrackRequests';
 import { AuthCallback } from './components/AuthCallback';
 import { ServiceRequestForm } from './ServiceRequestForm';
 
-type Page = 'form' | 'profile';
+type Page = 'form' | 'profile' | 'track';
 
 function AppShell() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -19,10 +20,21 @@ function AppShell() {
     return <Profile onBack={() => setCurrentPage('form')} />;
   }
 
+  if (currentPage === 'track') {
+    return (
+      <TrackRequests
+        user={user}
+        onBack={() => setCurrentPage('form')}
+        onProfileClick={() => setCurrentPage('profile')}
+      />
+    );
+  }
+
   return (
     <ServiceRequestForm
       user={user}
       onProfileClick={() => setCurrentPage('profile')}
+      onTrackClick={() => setCurrentPage('track')}
     />
   );
 }
