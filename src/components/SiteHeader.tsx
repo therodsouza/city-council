@@ -41,7 +41,7 @@ export function SiteHeader({ user, onProfileClick, onTrackClick }: Props) {
             <button
               type="button"
               onClick={onTrackClick}
-              className="hidden md:inline-flex px-3 py-2.5 rounded-sm bg-primary-foreground/10 hover:bg-primary-foreground/20 border border-primary-foreground/20 text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors"
+              className="inline-flex px-3 py-2.5 rounded-sm bg-primary-foreground/10 hover:bg-primary-foreground/20 border border-primary-foreground/20 text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors"
             >
               Track Requests
             </button>
