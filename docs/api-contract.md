@@ -182,8 +182,139 @@ When included, the backend reads the filename from the `Content-Disposition` hea
 
 ---
 
+### 3. Get User Profile
+
+Called on every session restore, immediately after token validation. The response tells the frontend whether the user has already completed onboarding so it can skip the gate without asking the user to re-submit.
+
+```
+GET /users/me
+Authorization: Bearer <token>
+```
+
+No query parameters, no request body.
+
+**Identity** — the backend must derive the user's identity from the Bearer token only (extract `sub` or `email` from the verified ID token). The frontend does not send a user ID in the request.
+
+**Success response — profile exists (`200 OK`)**
+
+```json
+{
+  "profileComplete": true,
+  "name": "Jane Smith",
+  "phone": "+61400000000",
+  "dateOfBirth": "1990-05-15",
+  "gender": "Woman",
+  "address": "42 Test St",
+  "suburb": "Northbridge",
+  "postcode": "6003"
+}
+```
+
+**Success response — first login, no profile yet (`200 OK`)**
+
+```json
+{
+  "profileComplete": false
+}
+```
+
+Returning `200` in both cases keeps the frontend logic simple — it reads `profileComplete` rather than branching on HTTP status.
+
+**Field reference**
+
+| Field            | Type    | Present when              | Description                              |
+|------------------|---------|---------------------------|------------------------------------------|
+| `profileComplete`| boolean | always                    | `true` if `PUT /users/me` was ever called for this user |
+| `name`           | string  | `profileComplete: true`   | As submitted during onboarding           |
+| `phone`          | string  | `profileComplete: true`   |                                          |
+| `dateOfBirth`    | string  | `profileComplete: true`   | ISO date, e.g. `"1990-05-15"`            |
+| `gender`         | string  | `profileComplete: true`   |                                          |
+| `address`        | string  | `profileComplete: true`   | Street address                           |
+| `suburb`         | string  | `profileComplete: true`   |                                          |
+| `postcode`       | string  | `profileComplete: true`   | 4-digit AU postcode, may be empty string |
+
+**Error responses**
+
+| Status | When                   |
+|--------|------------------------|
+| `401`  | Missing or invalid JWT |
+| `500`  | Unexpected server error|
+
+**How the frontend uses this response**
+
+```
+Session restore sequence:
+1. Validate auth tokens
+2. GET /users/me
+3a. profileComplete: true  → initialise user with profileComplete: true and profile data
+                             → onboarding gate does not fire
+3b. profileComplete: false → initialise user with profileComplete: false
+                             → onboarding gate fires, user sees the form
+```
+
+---
+
+### 4. Save User Profile
+
+Called once when the user submits the onboarding form. Also used for future profile edits.
+
+```
+PUT /users/me
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+**Request body**
+
+```json
+{
+  "name": "Jane Smith",
+  "phone": "+61400000000",
+  "dateOfBirth": "1990-05-15",
+  "gender": "Woman",
+  "address": "42 Test St",
+  "suburb": "Northbridge",
+  "postcode": "6003"
+}
+```
+
+**Field reference**
+
+| Field         | Type   | Required | Description                            |
+|---------------|--------|----------|----------------------------------------|
+| `name`        | string | yes      | Full name from Google profile          |
+| `phone`       | string | yes      | Phone number as entered by the user    |
+| `dateOfBirth` | string | yes      | ISO date, e.g. `"1990-05-15"`          |
+| `gender`      | string | yes      | One of the frontend gender options     |
+| `address`     | string | yes      | Street address                         |
+| `suburb`      | string | yes      | Suburb                                 |
+| `postcode`    | string | no       | 4-digit AU postcode; may be empty string |
+
+The backend should upsert — create on first call, overwrite on subsequent calls.
+
+**Success response — `200 OK`**
+
+Empty body, or:
+
+```json
+{ "profileComplete": true }
+```
+
+The frontend does not read the response body; it updates local state optimistically on `200`.
+
+**Error responses**
+
+| Status | When                                                      |
+|--------|-----------------------------------------------------------|
+| `400`  | Missing required field or invalid `dateOfBirth` format    |
+| `401`  | Missing or invalid JWT                                    |
+| `500`  | Unexpected server error                                   |
+
+---
+
 ## Notes
 
-- Both endpoints require JWT auth. No unauthenticated access is permitted.
+- All endpoints require JWT auth. No unauthenticated access is permitted.
 - `referenceNumber` is server-generated. The frontend must not generate or send it; read it from the `201` response body.
 - `contact.receiveUpdates` is stored but email delivery is not yet implemented. Do not communicate to the user that they will receive emails until this is wired up.
+- `GET /users/me` must be implemented before the onboarding gate will correctly skip returning users. Until it is, all users are prompted to complete the form on every page load.

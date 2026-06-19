@@ -1,8 +1,61 @@
-import { Wrench, Mail, LogOut, ArrowLeft, User } from 'lucide-react';
+import { Wrench, Mail, LogOut, ArrowLeft, User, Calendar, MapPin, Phone } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import type { UserProfile } from '../contexts/AuthContext';
 
 interface ProfileProps {
   onBack: () => void;
+}
+
+function formatDob(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-AU', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
+function InfoRow({
+  icon: Icon,
+  label,
+  value,
+  sub,
+  last,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  sub?: string;
+  last?: boolean;
+}) {
+  return (
+    <div className={`flex items-start gap-4 pb-4${last ? '' : ' border-b border-border'}`}>
+      <div className="w-10 h-10 rounded-sm bg-primary/10 flex items-center justify-center flex-shrink-0">
+        <Icon className="w-5 h-5 text-primary" />
+      </div>
+      <div className="flex-1">
+        <p className="text-xs text-muted-foreground uppercase tracking-wider font-mono mb-1">{label}</p>
+        <p className="text-sm font-semibold text-foreground">{value}</p>
+        {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
+      </div>
+    </div>
+  );
+}
+
+function PersonalDetails({ p }: { p: UserProfile }) {
+  const address = [p.address, p.suburb, p.postcode].filter(Boolean).join(', ');
+  return (
+    <div className="px-8 py-6 border-t border-border">
+      <h3 className="text-xs uppercase tracking-widest font-mono text-muted-foreground mb-4">
+        Personal Details
+      </h3>
+      <div className="space-y-4">
+        <InfoRow icon={Calendar} label="Date of Birth" value={formatDob(p.dateOfBirth)} />
+        <InfoRow icon={User} label="Gender" value={p.gender} />
+        <InfoRow icon={Phone} label="Phone Number" value={p.phone} />
+        <InfoRow icon={MapPin} label="Residential Address" value={address} last />
+      </div>
+    </div>
+  );
 }
 
 const GoogleLogo = () => (
@@ -103,6 +156,8 @@ export function Profile({ onBack }: ProfileProps) {
               </div>
             </div>
           </div>
+
+          {user.profile && <PersonalDetails p={user.profile} />}
 
           <div className="px-8 py-6 border-t border-border bg-muted/10">
             <button

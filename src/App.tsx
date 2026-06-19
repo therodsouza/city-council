@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Login } from './components/Login';
+import { OnboardingForm } from './components/OnboardingForm';
 import { Profile } from './components/Profile';
 import { TrackRequests } from './components/TrackRequests';
 import { AuthCallback } from './components/AuthCallback';
@@ -15,6 +16,7 @@ function AppShell() {
 
   if (isLoading) return null;
   if (!isAuthenticated) return <Login />;
+  if (!user?.profileComplete) return <OnboardingForm />;
 
   if (currentPage === 'profile') {
     return <Profile onBack={() => setCurrentPage('form')} />;
