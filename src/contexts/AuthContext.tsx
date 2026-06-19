@@ -1,12 +1,24 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
 import { authenticationService } from '../services/AuthenticationService';
+import { getUserProfile } from '../services/UserService';
 import type { GoogleUserProfile } from '../types';
+
+export interface UserProfile {
+  dateOfBirth: string;
+  gender: string;
+  phone: string;
+  address: string;
+  suburb: string;
+  postcode: string;
+}
 
 interface User {
   id: string;
   name: string;
   email: string;
   photo: string;
+  profileComplete: boolean;
+  profile: UserProfile | null;
 }
 
 interface AuthContextType {
@@ -17,6 +29,7 @@ interface AuthContextType {
   login: () => Promise<void>;
   logout: () => Promise<void>;
   completeImplicitAuth: (idToken: string, accessToken: string, state: string) => Promise<void>;
+  completeProfile: (profile: UserProfile) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,7 +39,31 @@ const toUser = (profile: GoogleUserProfile): User => ({
   name: profile.name,
   email: profile.email,
   photo: profile.picture ?? '',
+  profileComplete: false,
+  profile: null,
 });
+
+async function hydrateUser(googleProfile: GoogleUserProfile): Promise<User> {
+  const base = toUser(googleProfile);
+  try {
+    const saved = await getUserProfile();
+    if (!saved.profileComplete) return base;
+    return {
+      ...base,
+      profileComplete: true,
+      profile: {
+        dateOfBirth: saved.dateOfBirth ?? '',
+        gender: saved.gender ?? '',
+        phone: saved.phone ?? '',
+        address: saved.address ?? '',
+        suburb: saved.suburb ?? '',
+        postcode: saved.postcode ?? '',
+      },
+    };
+  } catch {
+    return base;
+  }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -38,8 +75,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     (async () => {
       try {
         if (await authenticationService.isAuthenticated()) {
-          const profile = await authenticationService.getCurrentUser();
-          if (!cancelled && profile) setUser(toUser(profile));
+          const googleProfile = await authenticationService.getCurrentUser();
+          if (!cancelled && googleProfile) setUser(await hydrateUser(googleProfile));
         }
       } finally {
         if (!cancelled) setIsLoading(false);
@@ -60,13 +97,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     await authenticationService.logout();
     setUser(null);
+    setError(null);
+  }, []);
+
+  const completeProfile = useCallback((profile: UserProfile) => {
+    setUser((prev) => prev ? { ...prev, profileComplete: true, profile } : prev);
   }, []);
 
   const completeImplicitAuth = useCallback(async (idToken: string, accessToken: string, state: string) => {
     setError(null);
     try {
-      const profile = await authenticationService.completeGoogleAuthImplicit(idToken, accessToken, state);
-      setUser(toUser(profile));
+      const googleProfile = await authenticationService.completeGoogleAuthImplicit(idToken, accessToken, state);
+      setUser(await hydrateUser(googleProfile));
     } catch (e: any) {
       setError(e?.message ?? 'Authentication failed');
       throw e;
@@ -81,7 +123,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     logout,
     completeImplicitAuth,
-  }), [user, isLoading, error, login, logout, completeImplicitAuth]);
+    completeProfile,
+  }), [user, isLoading, error, login, logout, completeImplicitAuth, completeProfile]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
