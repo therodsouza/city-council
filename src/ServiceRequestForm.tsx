@@ -14,6 +14,7 @@ interface Props {
   user: User | null;
   onProfileClick: () => void;
   onTrackClick: () => void;
+  onMapClick?: () => void;
 }
 
 const EMPTY_FORM: Omit<FormData, 'name' | 'email'> = {
@@ -30,7 +31,7 @@ const EMPTY_FORM: Omit<FormData, 'name' | 'email'> = {
   agreeTerms: false,
 };
 
-export function ServiceRequestForm({ user, onProfileClick, onTrackClick }: Props) {
+export function ServiceRequestForm({ user, onProfileClick, onTrackClick, onMapClick }: Props) {
   const [step, setStep] = useState<Step>(1);
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -63,7 +64,7 @@ export function ServiceRequestForm({ user, onProfileClick, onTrackClick }: Props
 
   return (
     <div className="min-h-screen bg-background font-sans flex flex-col">
-      <SiteHeader user={user} onProfileClick={onProfileClick} onTrackClick={onTrackClick} />
+      <SiteHeader user={user} onProfileClick={onProfileClick} onTrackClick={onTrackClick} onMapClick={onMapClick} />
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-8">
         {submitted ? (

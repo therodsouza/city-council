@@ -7,8 +7,9 @@ import { Profile } from './components/Profile';
 import { TrackRequests } from './components/TrackRequests';
 import { AuthCallback } from './components/AuthCallback';
 import { ServiceRequestForm } from './ServiceRequestForm';
+import { RequestMap } from './components/RequestMap';
 
-type Page = 'form' | 'profile' | 'track';
+type Page = 'form' | 'profile' | 'track' | 'map';
 
 function AppShell() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -32,11 +33,22 @@ function AppShell() {
     );
   }
 
+  if (currentPage === 'map' && user?.isAdmin) {
+    return (
+      <RequestMap
+        user={user}
+        onBack={() => setCurrentPage('form')}
+        onProfileClick={() => setCurrentPage('profile')}
+      />
+    );
+  }
+
   return (
     <ServiceRequestForm
       user={user}
       onProfileClick={() => setCurrentPage('profile')}
       onTrackClick={() => setCurrentPage('track')}
+      onMapClick={user?.isAdmin ? () => setCurrentPage('map') : undefined}
     />
   );
 }

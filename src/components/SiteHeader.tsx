@@ -1,13 +1,15 @@
-import { Wrench } from 'lucide-react';
+import { Wrench, Map } from 'lucide-react';
 import { User } from '../contexts/AuthContext';
 
 interface Props {
   user: User | null;
   onProfileClick: () => void;
   onTrackClick?: () => void;
+  onMapClick?: () => void;
+  adminLabel?: boolean;
 }
 
-export function SiteHeader({ user, onProfileClick, onTrackClick }: Props) {
+export function SiteHeader({ user, onProfileClick, onTrackClick, onMapClick, adminLabel }: Props) {
   const date = new Date().toLocaleDateString('en-AU', {
     day: 'numeric',
     month: 'long',
@@ -33,7 +35,7 @@ export function SiteHeader({ user, onProfileClick, onTrackClick }: Props) {
         <div className="flex items-center gap-4">
           <div className="hidden sm:block text-right">
             <div className="text-xs font-mono uppercase tracking-wide opacity-70">
-              Online Services
+              {adminLabel ? 'Admin Console' : 'Online Services'}
             </div>
             <div className="text-sm opacity-90">{date}</div>
           </div>
@@ -44,6 +46,17 @@ export function SiteHeader({ user, onProfileClick, onTrackClick }: Props) {
               className="inline-flex px-3 py-2.5 rounded-sm bg-primary-foreground/10 hover:bg-primary-foreground/20 border border-primary-foreground/20 text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors"
             >
               Track Requests
+            </button>
+          )}
+          {onMapClick && (
+            <button
+              type="button"
+              onClick={onMapClick}
+              className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 rounded-sm bg-accent/80 hover:bg-accent transition-colors border border-accent text-sm text-white"
+              title="Request Map (Admin)"
+            >
+              <Map className="w-4 h-4" />
+              Request Map
             </button>
           )}
           {user && (

@@ -200,6 +200,7 @@ No query parameters, no request body.
 ```json
 {
   "profileComplete": true,
+  "role": "user",
   "name": "Jane Smith",
   "phone": "+61400000000",
   "dateOfBirth": "1990-05-15",
@@ -214,7 +215,8 @@ No query parameters, no request body.
 
 ```json
 {
-  "profileComplete": false
+  "profileComplete": false,
+  "role": "user"
 }
 ```
 
@@ -225,6 +227,7 @@ Returning `200` in both cases keeps the frontend logic simple — it reads `prof
 | Field            | Type    | Present when              | Description                              |
 |------------------|---------|---------------------------|------------------------------------------|
 | `profileComplete`| boolean | always                    | `true` if `PUT /users/me` was ever called for this user |
+| `role`           | string  | always                    | `"admin"` or `"user"`. Controls access to admin features (e.g. Request Map). |
 | `name`           | string  | `profileComplete: true`   | As submitted during onboarding           |
 | `phone`          | string  | `profileComplete: true`   |                                          |
 | `dateOfBirth`    | string  | `profileComplete: true`   | ISO date, e.g. `"1990-05-15"`            |
@@ -309,6 +312,40 @@ The frontend does not read the response body; it updates local state optimistica
 | `400`  | Missing required field or invalid `dateOfBirth` format    |
 | `401`  | Missing or invalid JWT                                    |
 | `500`  | Unexpected server error                                   |
+
+---
+
+### 5. Delete User Account
+
+Permanently deletes the authenticated user's profile record. Intended for account self-deletion flows.
+
+```
+DELETE /users/me
+Authorization: Bearer <token>
+```
+
+No query parameters, no request body.
+
+**Identity** — the backend derives the user's identity from the Bearer token (`sub` claim). The frontend does not send a user ID.
+
+**Success response — `204 No Content`**
+
+Empty body. The profile record has been removed. If no profile existed for this user, the response is still `204` — the operation is idempotent.
+
+**What is deleted**
+
+| Store           | Action                                       |
+|-----------------|----------------------------------------------|
+| DynamoDB `users`| Profile record for this `sub` is deleted     |
+| Service requests| Not affected — requests have no owner field  |
+| S3 images       | Not affected — image keys carry no user link |
+
+**Error responses**
+
+| Status | When                   |
+|--------|------------------------|
+| `401`  | Missing or invalid JWT |
+| `500`  | Unexpected server error|
 
 ---
 

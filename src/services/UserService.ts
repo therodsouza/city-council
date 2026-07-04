@@ -5,6 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL as string | undefined;
 
 interface GetUserProfileResponse {
   profileComplete: boolean;
+  role?: 'admin' | 'user';
   name?: string;
   phone?: string;
   dateOfBirth?: string;
@@ -29,6 +30,25 @@ export async function getUserProfile(): Promise<GetUserProfileResponse> {
   }
 
   return response.json() as Promise<GetUserProfileResponse>;
+}
+
+export async function deleteUserAccount(): Promise<void> {
+  if (!API_URL) {
+    console.log('[UserService] No VITE_API_URL — skipping account deletion');
+    return;
+  }
+
+  const idToken = await authenticationService.getIdToken();
+
+  const response = await fetch(`${API_URL}/users/me`, {
+    method: 'DELETE',
+    headers: idToken ? { Authorization: `Bearer ${idToken}` } : {},
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({})) as { message?: string };
+    throw new Error(err.message ?? `Account deletion failed (${response.status})`);
+  }
 }
 
 export async function putUserProfile(name: string, profile: UserProfile): Promise<void> {

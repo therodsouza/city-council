@@ -93,6 +93,7 @@ export function Login() {
               and{' '}
               <span className="text-primary underline cursor-pointer">Privacy Policy</span>
             </p>
+
           </div>
 
           <div className="space-y-4">

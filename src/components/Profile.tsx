@@ -1,6 +1,8 @@
-import { Wrench, Mail, LogOut, ArrowLeft, User, Calendar, MapPin, Phone } from 'lucide-react';
+import { useState } from 'react';
+import { Wrench, Mail, LogOut, ArrowLeft, User, Calendar, MapPin, Phone, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import type { UserProfile } from '../contexts/AuthContext';
+import { deleteUserAccount } from '../services/UserService';
 
 interface ProfileProps {
   onBack: () => void;
@@ -69,6 +71,22 @@ const GoogleLogo = () => (
 
 export function Profile({ onBack }: ProfileProps) {
   const { user, logout } = useAuth();
+  const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  async function handleDeleteAccount() {
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteUserAccount();
+      await logout();
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Account deletion failed. Please try again.');
+      setDeleting(false);
+      setConfirming(false);
+    }
+  }
 
   if (!user) return null;
 
@@ -159,15 +177,58 @@ export function Profile({ onBack }: ProfileProps) {
 
           {user.profile && <PersonalDetails p={user.profile} />}
 
-          <div className="px-8 py-6 border-t border-border bg-muted/10">
+          <div className="px-8 py-6 border-t border-border bg-muted/10 flex flex-col gap-4">
             <button
               type="button"
               onClick={logout}
-              className="flex items-center gap-2 px-5 py-2.5 border border-destructive bg-white text-destructive text-sm font-semibold rounded-sm hover:bg-destructive hover:text-white transition-colors"
+              className="flex items-center gap-2 px-5 py-2.5 border border-destructive bg-white text-destructive text-sm font-semibold rounded-sm hover:bg-destructive hover:text-white transition-colors w-fit"
             >
               <LogOut className="w-4 h-4" />
               Sign Out
             </button>
+
+            <div className="border-t border-border pt-4">
+              <p className="text-xs text-muted-foreground mb-3 font-mono uppercase tracking-wider">Danger Zone</p>
+              {!confirming ? (
+                <button
+                  type="button"
+                  onClick={() => setConfirming(true)}
+                  className="flex items-center gap-2 px-5 py-2.5 border border-destructive/40 bg-white text-destructive/70 text-sm font-semibold rounded-sm hover:border-destructive hover:text-destructive transition-colors w-fit"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete My Account
+                </button>
+              ) : (
+                <div className="border border-destructive/40 rounded-sm p-4 bg-destructive/5 max-w-md">
+                  <p className="text-sm font-semibold text-foreground mb-1">Are you sure?</p>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Your profile will be permanently deleted. This cannot be undone.
+                  </p>
+                  {deleteError && (
+                    <p className="text-sm text-destructive mb-3">{deleteError}</p>
+                  )}
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={handleDeleteAccount}
+                      disabled={deleting}
+                      className="flex items-center gap-2 px-4 py-2 bg-destructive text-white text-sm font-semibold rounded-sm hover:bg-destructive/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      {deleting ? 'Deleting…' : 'Yes, delete my account'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setConfirming(false); setDeleteError(null); }}
+                      disabled={deleting}
+                      className="px-4 py-2 border border-border text-sm font-semibold rounded-sm hover:bg-muted transition-colors disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

@@ -19,6 +19,7 @@ interface User {
   photo: string;
   profileComplete: boolean;
   profile: UserProfile | null;
+  isAdmin: boolean;
 }
 
 interface AuthContextType {
@@ -28,6 +29,7 @@ interface AuthContextType {
   error: string | null;
   login: () => Promise<void>;
   logout: () => Promise<void>;
+  loginAsAdmin: () => void;
   completeImplicitAuth: (idToken: string, accessToken: string, state: string) => Promise<void>;
   completeProfile: (profile: UserProfile) => void;
 }
@@ -41,15 +43,18 @@ const toUser = (profile: GoogleUserProfile): User => ({
   photo: profile.picture ?? '',
   profileComplete: false,
   profile: null,
+  isAdmin: false,
 });
 
 async function hydrateUser(googleProfile: GoogleUserProfile): Promise<User> {
   const base = toUser(googleProfile);
   try {
     const saved = await getUserProfile();
-    if (!saved.profileComplete) return base;
+    const isAdmin = saved.role === 'admin';
+    if (!saved.profileComplete) return { ...base, isAdmin };
     return {
       ...base,
+      isAdmin,
       profileComplete: true,
       profile: {
         dateOfBirth: saved.dateOfBirth ?? '',
@@ -100,6 +105,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
   }, []);
 
+  const loginAsAdmin = useCallback(() => {
+    setUser({
+      id: 'mock-admin-001',
+      name: 'Admin User',
+      email: 'admin@council.gov.au',
+      photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin',
+      profileComplete: true,
+      profile: null,
+      isAdmin: true,
+    });
+  }, []);
+
   const completeProfile = useCallback((profile: UserProfile) => {
     setUser((prev) => prev ? { ...prev, profileComplete: true, profile } : prev);
   }, []);
@@ -122,9 +139,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     error,
     login,
     logout,
+    loginAsAdmin,
     completeImplicitAuth,
     completeProfile,
-  }), [user, isLoading, error, login, logout, completeImplicitAuth, completeProfile]);
+  }), [user, isLoading, error, login, logout, loginAsAdmin, completeImplicitAuth, completeProfile]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
