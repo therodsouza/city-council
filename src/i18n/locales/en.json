@@ -9,7 +9,8 @@
     "cancel": "Cancel",
     "and": "and",
     "step_counter": "{{current}} of {{total}}",
-    "submit_failed": "Submission failed. Please try again."
+    "submit_failed": "Submission failed. Please try again.",
+    "submitting": "Submitting…"
   },
   "language": {
     "label": "Language",

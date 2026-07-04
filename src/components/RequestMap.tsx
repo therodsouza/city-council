@@ -1,12 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
-  ArrowLeft, MapPin, Map, HardHat, Paintbrush, Wrench, Droplets,
-  Zap, Leaf, Trash2, Building2, X, Layers, Filter,
+  ArrowLeft, HardHat, Paintbrush, Wrench, Droplets,
+  Zap, Leaf, Trash2, Building2, X, Layers, Filter, RefreshCw,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { GoogleMap, MarkerF, useJsApiLoader } from '@react-google-maps/api';
 import { User } from '../contexts/AuthContext';
 import { SiteHeader } from './SiteHeader';
 import { categoryLabel, statusLabel, dateLocale } from '../i18n/labels';
+import { getServiceRequests } from '../services/ServiceRequestService';
+import type { ServiceRequestListItem } from '../services/ServiceRequestService';
 
 type Status = 'received' | 'under_review' | 'in_progress' | 'resolved' | 'closed';
 
@@ -34,12 +37,13 @@ const STATUS_CONFIG: Record<Status, {
   pill: string;
   text: string;
   pin: string;
+  hex: string;
 }> = {
-  received:     { dot: 'bg-sky-400',     pill: 'bg-sky-50 border border-sky-200',        text: 'text-sky-800',     pin: 'bg-sky-500' },
-  under_review: { dot: 'bg-violet-400',  pill: 'bg-violet-50 border border-violet-200',  text: 'text-violet-800',  pin: 'bg-violet-500' },
-  in_progress:  { dot: 'bg-amber-400',   pill: 'bg-amber-50 border border-amber-200',    text: 'text-amber-800',   pin: 'bg-amber-500' },
-  resolved:     { dot: 'bg-emerald-500', pill: 'bg-emerald-50 border border-emerald-200', text: 'text-emerald-800', pin: 'bg-emerald-500' },
-  closed:       { dot: 'bg-neutral-400', pill: 'bg-neutral-100 border border-neutral-200', text: 'text-neutral-600', pin: 'bg-neutral-400' },
+  received:     { dot: 'bg-sky-400',     pill: 'bg-sky-50 border border-sky-200',         text: 'text-sky-800',     pin: 'bg-sky-500',     hex: '#38bdf8' },
+  under_review: { dot: 'bg-violet-400',  pill: 'bg-violet-50 border border-violet-200',   text: 'text-violet-800',  pin: 'bg-violet-500',  hex: '#a78bfa' },
+  in_progress:  { dot: 'bg-amber-400',   pill: 'bg-amber-50 border border-amber-200',     text: 'text-amber-800',   pin: 'bg-amber-500',   hex: '#fbbf24' },
+  resolved:     { dot: 'bg-emerald-500', pill: 'bg-emerald-50 border border-emerald-200', text: 'text-emerald-800', pin: 'bg-emerald-500', hex: '#10b981' },
+  closed:       { dot: 'bg-neutral-400', pill: 'bg-neutral-100 border border-neutral-200', text: 'text-neutral-600', pin: 'bg-neutral-400', hex: '#a3a3a3' },
 };
 
 const ACTIVE_STATUSES: Status[] = ['received', 'under_review', 'in_progress', 'resolved'];
@@ -55,122 +59,26 @@ const CATEGORY_ICONS: Record<string, React.ElementType> = {
   other:    Building2,
 };
 
-const LAT_MIN = -33.915;
-const LAT_MAX = -33.878;
-const LNG_MIN = 151.150;
-const LNG_MAX = 151.190;
-
-const ALL_REQUESTS: MapRequest[] = [
-  {
-    referenceNumber: 'SR-2026-84231',
-    category: 'pothole',
-    status: 'received',
-    createdAt: new Date('2026-06-10'),
-    address: '142 Darling Street',
-    suburb: 'Balmain',
-    lat: -33.8815,
-    lng: 151.1762,
-  },
-  {
-    referenceNumber: 'SR-2026-84187',
-    category: 'graffiti',
-    status: 'under_review',
-    createdAt: new Date('2026-06-08'),
-    address: '78 Norton Street',
-    suburb: 'Leichhardt',
-    lat: -33.8839,
-    lng: 151.1574,
-  },
-  {
-    referenceNumber: 'SR-2026-84053',
-    category: 'lighting',
-    status: 'in_progress',
-    createdAt: new Date('2026-06-05'),
-    address: '23 Annandale Street',
-    suburb: 'Annandale',
-    lat: -33.8888,
-    lng: 151.1651,
-  },
-  {
-    referenceNumber: 'SR-2026-83901',
-    category: 'trees',
-    status: 'resolved',
-    createdAt: new Date('2026-06-01'),
-    address: '5 Glebe Point Road',
-    suburb: 'Glebe',
-    lat: -33.8798,
-    lng: 151.1865,
-  },
-  {
-    referenceNumber: 'SR-2026-83744',
-    category: 'flooding',
-    status: 'closed',
-    createdAt: new Date('2026-05-28'),
-    address: '310 Victoria Road',
-    suburb: 'Rozelle',
-    lat: -33.8612,
-    lng: 151.1714,
-  },
-  {
-    referenceNumber: 'SR-2026-84312',
-    category: 'broken',
-    status: 'received',
-    createdAt: new Date('2026-06-12'),
-    address: '88 Parramatta Road',
-    suburb: 'Camperdown',
-    lat: -33.8924,
-    lng: 151.1791,
-  },
-  {
-    referenceNumber: 'SR-2026-84098',
-    category: 'dumping',
-    status: 'in_progress',
-    createdAt: new Date('2026-06-06'),
-    address: '15 Pyrmont Bridge Road',
-    suburb: 'Pyrmont',
-    lat: -33.8762,
-    lng: 151.1962,
-  },
-  {
-    referenceNumber: 'SR-2026-83812',
-    category: 'pothole',
-    status: 'under_review',
-    createdAt: new Date('2026-05-30'),
-    address: '201 Abercrombie Street',
-    suburb: 'Chippendale',
-    lat: -33.8949,
-    lng: 151.1972,
-  },
-];
-
-function toPercent(val: number, min: number, max: number) {
-  return ((val - min) / (max - min)) * 100;
+function toMapRequest(item: ServiceRequestListItem): MapRequest {
+  return {
+    referenceNumber: item.referenceNumber,
+    category: item.category.toLowerCase(),
+    status: (item.status?.toLowerCase() ?? 'received') as Status,
+    createdAt: new Date(item.createdAt),
+    address: item.address,
+    suburb: item.suburb,
+    lat: item.latitude ?? 0,
+    lng: item.longitude ?? 0,
+  };
 }
 
-function Pin({ req, selected, onClick }: { req: MapRequest; selected: boolean; onClick: () => void }) {
-  const { t } = useTranslation();
-  const left = toPercent(req.lng, LNG_MIN, LNG_MAX);
-  const top = 100 - toPercent(req.lat, LAT_MIN, LAT_MAX);
-  const { pin } = STATUS_CONFIG[req.status];
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{ left: `${left}%`, top: `${top}%` }}
-      className="absolute -translate-x-1/2 -translate-y-full"
-      aria-label={t('map.pin_aria', { category: categoryLabel(req.category, t), address: req.address })}
-    >
-      <div className={`transition-transform ${selected ? 'scale-125' : 'hover:scale-110'}`}>
-        <div
-          className={`w-7 h-7 rounded-full shadow-md border-2 flex items-center justify-center ${pin} ${selected ? 'border-foreground' : 'border-white'}`}
-        >
-          <MapPin className="w-3.5 h-3.5 text-white" />
-        </div>
-        <div className={`w-0.5 h-2 ${pin} mx-auto`} />
-      </div>
-    </button>
-  );
+function markerIcon(hex: string): google.maps.Icon {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36"><circle cx="14" cy="14" r="13" fill="${hex}" stroke="white" stroke-width="2"/><line x1="14" y1="27" x2="14" y2="36" stroke="${hex}" stroke-width="3"/></svg>`;
+  return {
+    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+    scaledSize: new window.google.maps.Size(28, 36),
+    anchor: new window.google.maps.Point(14, 36),
+  };
 }
 
 function StatusDot({ status }: { status: Status }) {
@@ -251,10 +159,33 @@ export function RequestMap({ user, onBack, onProfileClick }: RequestMapProps) {
   const [statusFilter, setStatusFilter] = useState<Status | 'all'>('all');
   const [selected, setSelected] = useState<MapRequest | null>(null);
   const [showLegend, setShowLegend] = useState(true);
+  const [requests, setRequests] = useState<MapRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
-  const visible = ALL_REQUESTS.filter(
-    (r) => statusFilter === 'all' || r.status === statusFilter,
-  );
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
+  const { isLoaded } = useJsApiLoader({ id: 'google-map-script', googleMapsApiKey: apiKey ?? '' });
+  const onMapLoad = useCallback((_map: google.maps.Map) => {}, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    setFetchError(null);
+    getServiceRequests()
+      .then((items) => { if (!cancelled) setRequests(items.map(toMapRequest)); })
+      .catch((e: unknown) => { if (!cancelled) setFetchError(e instanceof Error ? e.message : 'Failed to load requests'); })
+      .finally(() => { if (!cancelled) setIsLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const mappable = requests.filter((r) => r.lat !== 0 && r.lng !== 0);
+  const visible = mappable.filter((r) => statusFilter === 'all' || r.status === statusFilter);
+  const center = mappable.length > 0
+    ? {
+        lat: mappable.reduce((s, r) => s + r.lat, 0) / mappable.length,
+        lng: mappable.reduce((s, r) => s + r.lng, 0) / mappable.length,
+      }
+    : { lat: -33.868, lng: 151.21 };
 
   const handleChip = (s: Status | 'all') => {
     setStatusFilter((prev) => (prev === s ? 'all' : s));
@@ -283,14 +214,13 @@ export function RequestMap({ user, onBack, onProfileClick }: RequestMapProps) {
           <div className="w-px h-4 bg-border" />
           <span className="font-display text-lg font-bold text-foreground">{t('map.title')}</span>
           <span className="hidden sm:inline-block text-xs font-mono bg-muted px-2 py-0.5 rounded-sm text-muted-foreground">
-            {t('map.count', { visible: visible.length, total: ALL_REQUESTS.length })}
+            {t('map.count', { visible: visible.length, total: requests.length })}
           </span>
         </div>
 
         <div className="flex items-center gap-2 ml-auto">
           <Filter className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
           <div className="flex items-center gap-1.5 flex-wrap">
-            {/* All chip */}
             <button
               type="button"
               onClick={() => handleChip('all')}
@@ -334,55 +264,44 @@ export function RequestMap({ user, onBack, onProfileClick }: RequestMapProps) {
 
       {/* Map area */}
       <div className="flex-1 relative overflow-hidden" style={{ minHeight: 520 }}>
-        {/* Google Maps mount point — replace contents with <GoogleMap> from @react-google-maps/api once an API key is available */}
-        <div className="absolute inset-0 bg-[#e8e0d8]">
-          {/* SVG grid texture */}
-          <svg className="absolute inset-0 w-full h-full opacity-30" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#9c8f7a" strokeWidth="0.5" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#grid)" />
-          </svg>
-
-          {/* Road / park overlay */}
-          <svg className="absolute inset-0 w-full h-full opacity-40" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
-            <rect x="100" y="0" width="18" height="600" fill="#d4c9b5" />
-            <rect x="300" y="0" width="14" height="600" fill="#d4c9b5" />
-            <rect x="520" y="0" width="16" height="600" fill="#d4c9b5" />
-            <rect x="0" y="120" width="800" height="14" fill="#d4c9b5" />
-            <rect x="0" y="300" width="800" height="18" fill="#d4c9b5" />
-            <rect x="0" y="460" width="800" height="12" fill="#d4c9b5" />
-            <rect x="180" y="200" width="180" height="120" rx="4" fill="#c8d9b8" />
-            <rect x="420" y="330" width="140" height="90" rx="4" fill="#c8d9b8" />
-          </svg>
-
-          {/* Watermark */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/70 border border-border rounded-sm px-3 py-1.5 text-xs font-mono text-muted-foreground backdrop-blur-sm pointer-events-none">
-            {t('map.api_watermark')}
+        {!apiKey ? (
+          <div className="absolute inset-0 bg-[#e8e0d8] flex items-center justify-center">
+            <div className="bg-white/70 border border-border rounded-sm px-3 py-1.5 text-xs font-mono text-muted-foreground backdrop-blur-sm">
+              {t('map.api_watermark')}
+            </div>
           </div>
+        ) : isLoading || !isLoaded ? (
+          <div className="absolute inset-0 bg-[#e8e0d8] flex items-center justify-center">
+            <RefreshCw className="w-8 h-8 text-muted-foreground/30 animate-spin" />
+          </div>
+        ) : fetchError ? (
+          <div className="absolute inset-0 bg-[#e8e0d8] flex items-center justify-center">
+            <p className="text-sm text-destructive">{fetchError}</p>
+          </div>
+        ) : (
+          <>
+            <GoogleMap
+              mapContainerClassName="absolute inset-0"
+              center={center}
+              zoom={14}
+              onLoad={onMapLoad}
+              options={{ clickableIcons: false }}
+            >
+              {visible.map((req) => (
+                <MarkerF
+                  key={req.referenceNumber}
+                  position={{ lat: req.lat, lng: req.lng }}
+                  icon={markerIcon(STATUS_CONFIG[req.status].hex)}
+                  title={t('map.pin_aria', { category: categoryLabel(req.category, t), address: req.address })}
+                  onClick={() => handlePin(req)}
+                />
+              ))}
+            </GoogleMap>
 
-          {/* Pins */}
-          {visible.map((req) => (
-            <Pin
-              key={req.referenceNumber}
-              req={req}
-              selected={selected?.referenceNumber === req.referenceNumber}
-              onClick={() => handlePin(req)}
-            />
-          ))}
-
-          {/* Detail panel */}
-          {selected && (
-            <DetailPanel req={selected} onClose={() => setSelected(null)} />
-          )}
-
-          {/* Legend */}
-          {showLegend && (
-            <Legend requests={ALL_REQUESTS} />
-          )}
-        </div>
+            {selected && <DetailPanel req={selected} onClose={() => setSelected(null)} />}
+            {showLegend && <Legend requests={requests} />}
+          </>
+        )}
       </div>
     </div>
   );

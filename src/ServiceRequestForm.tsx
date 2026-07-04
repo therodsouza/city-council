@@ -36,6 +36,7 @@ export function ServiceRequestForm({ user, onProfileClick, onTrackClick, onMapCl
   const { t } = useTranslation();
   const [step, setStep] = useState<Step>(1);
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [referenceNumber, setReferenceNumber] = useState('');
   const [form, setForm] = useState<FormData>({
@@ -105,8 +106,10 @@ export function ServiceRequestForm({ user, onProfileClick, onTrackClick, onMapCl
                   setVal={setVal}
                   photoUrl={photoUrl}
                   onBack={() => setStep(3)}
+                  isSubmitting={isSubmitting}
                   onSubmit={async () => {
                     setSubmitError(null);
+                    setIsSubmitting(true);
                     try {
                       const payload = buildServiceRequestPayload(form);
                       const refNum = await submitServiceRequest(payload, photoFile);
@@ -114,6 +117,8 @@ export function ServiceRequestForm({ user, onProfileClick, onTrackClick, onMapCl
                       setSubmitted(true);
                     } catch (e: unknown) {
                       setSubmitError(e instanceof Error ? e.message : t('common.submit_failed'));
+                    } finally {
+                      setIsSubmitting(false);
                     }
                   }}
                   onEdit={setStep}

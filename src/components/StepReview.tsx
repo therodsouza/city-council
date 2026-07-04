@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { FormData, Step } from '../types/form';
 import { categoryLabel, severityPriorityLabel, siteTypeLabel } from '../i18n/labels';
@@ -51,9 +51,10 @@ interface Props {
   onSubmit: () => void;
   onEdit: (s: Step) => void;
   submitError?: string | null;
+  isSubmitting?: boolean;
 }
 
-export default function StepReview({ form, setVal, photoUrl, onBack, onSubmit, onEdit, submitError }: Props) {
+export default function StepReview({ form, setVal, photoUrl, onBack, onSubmit, onEdit, submitError, isSubmitting }: Props) {
   const { t } = useTranslation();
   return (
     <div>
@@ -128,11 +129,15 @@ export default function StepReview({ form, setVal, photoUrl, onBack, onSubmit, o
         <span className="text-xs font-mono text-muted-foreground">{t('common.step_counter', { current: 4, total: 4 })}</span>
         <button
           type="button"
-          disabled={!form.agreeTerms}
+          disabled={!form.agreeTerms || isSubmitting}
           onClick={onSubmit}
           className="flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground text-sm font-semibold rounded-sm hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
-          {t('stepReview.submit')} <ChevronRight className="w-4 h-4" />
+          {isSubmitting ? (
+            <><Loader2 className="w-4 h-4 animate-spin" /> {t('common.submitting')}</>
+          ) : (
+            <>{t('stepReview.submit')} <ChevronRight className="w-4 h-4" /></>
+          )}
         </button>
       </div>
     </div>

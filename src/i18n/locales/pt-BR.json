@@ -9,7 +9,8 @@
     "cancel": "Cancelar",
     "and": "e",
     "step_counter": "{{current}} de {{total}}",
-    "submit_failed": "Falha no envio. Tente novamente."
+    "submit_failed": "Falha no envio. Tente novamente.",
+    "submitting": "Enviando…"
   },
   "language": {
     "label": "Idioma",
