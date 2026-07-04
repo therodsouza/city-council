@@ -1,27 +1,12 @@
 import { CheckCircle2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { FormData } from '../types/form';
-
-const CATEGORY_LABELS: Record<string, string> = {
-  pothole: 'Pothole / Road Damage',
-  graffiti: 'Graffiti / Vandalism',
-  broken: 'Broken Equipment',
-  flooding: 'Flooding / Water Damage',
-  lighting: 'Street Light Outage',
-  trees: 'Fallen Tree / Branch',
-  dumping: 'Illegal Dumping / Litter',
-  other: 'Other Infrastructure',
-};
+import { categoryLabel, severityPriorityLabel, siteTypeLabel } from '../i18n/labels';
 
 const SEVERITY_DOTS: Record<string, string> = {
   low: 'bg-emerald-500',
   medium: 'bg-amber-500',
   high: 'bg-red-500',
-};
-
-const SEVERITY_LABELS: Record<string, string> = {
-  low: 'Low Priority',
-  medium: 'Medium Priority',
-  high: 'High Priority',
 };
 
 interface Props {
@@ -32,23 +17,24 @@ interface Props {
 }
 
 export default function SuccessScreen({ form, refNum, onReset, onTrackClick }: Props) {
+  const { t } = useTranslation();
   const timeline = [
     {
       n: 1,
-      title: 'Assessment — 1 to 3 business days',
-      desc: 'Our team will review your report and categorise the work required.',
+      title: t('success.timeline1_title'),
+      desc: t('success.timeline1_desc'),
     },
     {
       n: 2,
-      title: 'Scheduling & Planning',
-      desc: 'A work order is assigned to the relevant team and scheduled appropriately.',
+      title: t('success.timeline2_title'),
+      desc: t('success.timeline2_desc'),
     },
     {
       n: 3,
-      title: 'Resolution & Notification',
+      title: t('success.timeline3_title'),
       desc: form.receiveUpdates
-        ? `We will email ${form.email} when the issue has been resolved.`
-        : 'The issue will be resolved and the site restored to safe condition.',
+        ? t('success.timeline3_desc_updates', { email: form.email })
+        : t('success.timeline3_desc_no_updates'),
     },
   ];
 
@@ -58,38 +44,38 @@ export default function SuccessScreen({ form, refNum, onReset, onTrackClick }: P
         <CheckCircle2 className="w-10 h-10 text-primary" />
       </div>
       <h1 className="text-3xl font-display font-bold text-foreground mb-3">
-        Request Submitted
+        {t('success.title')}
       </h1>
       <p className="text-muted-foreground mb-8">
-        Your service request has been received and logged in our system.
+        {t('success.subtitle')}
       </p>
 
       <div className="bg-card border border-border rounded-sm p-6 mb-8 text-left">
         <div className="text-center mb-6">
           <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-1">
-            Reference Number
+            {t('success.reference_number')}
           </div>
           <div className="text-3xl font-mono font-bold text-primary tracking-wider">{refNum}</div>
-          <p className="text-xs text-muted-foreground mt-1">Save this number for future reference</p>
+          <p className="text-xs text-muted-foreground mt-1">{t('success.save_number')}</p>
         </div>
         <div className="grid grid-cols-2 gap-4 border-t border-border pt-4">
           <div>
             <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-2">
-              Location
+              {t('success.location')}
             </div>
             <div className="text-sm font-semibold">{form.address}</div>
             <div className="text-sm text-muted-foreground">
               {form.suburb}
               {form.postcode ? ` ${form.postcode}` : ''}
             </div>
-            <div className="text-sm text-muted-foreground">{form.siteType}</div>
+            <div className="text-sm text-muted-foreground">{siteTypeLabel(form.siteType, t)}</div>
           </div>
           <div>
             <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-2">
-              Issue
+              {t('success.issue')}
             </div>
             <div className="text-sm font-semibold">
-              {CATEGORY_LABELS[form.category] ?? form.category}
+              {categoryLabel(form.category, t)}
             </div>
             <div className="flex items-center gap-1.5 mt-1.5">
               <span
@@ -98,7 +84,7 @@ export default function SuccessScreen({ form, refNum, onReset, onTrackClick }: P
                 }`}
               />
               <span className="text-sm text-muted-foreground">
-                {SEVERITY_LABELS[form.severity] ?? form.severity}
+                {severityPriorityLabel(form.severity, t)}
               </span>
             </div>
           </div>
@@ -107,7 +93,7 @@ export default function SuccessScreen({ form, refNum, onReset, onTrackClick }: P
 
       <div className="text-left mb-8">
         <h3 className="text-base font-display font-bold text-foreground mb-4">
-          What happens next?
+          {t('success.what_next')}
         </h3>
         <div className="space-y-4">
           {timeline.map(item => (
@@ -130,14 +116,14 @@ export default function SuccessScreen({ form, refNum, onReset, onTrackClick }: P
           onClick={onReset}
           className="px-6 py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-sm hover:bg-primary/90 transition-colors"
         >
-          Submit Another Request
+          {t('success.submit_another')}
         </button>
         <button
           type="button"
           onClick={onTrackClick}
           className="px-6 py-2.5 border border-border rounded-sm text-sm font-medium text-foreground hover:bg-muted/60 transition-colors"
         >
-          Track Your Requests
+          {t('success.track')}
         </button>
       </div>
     </div>

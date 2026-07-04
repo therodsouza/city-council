@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 
 function parseFragmentParams(): URLSearchParams {
@@ -9,6 +10,7 @@ function parseFragmentParams(): URLSearchParams {
 }
 
 export function AuthCallback() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { completeImplicitAuth } = useAuth();
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +23,7 @@ export function AuthCallback() {
     const search = new URLSearchParams(window.location.search);
     const oauthError = search.get('error') ?? parseFragmentParams().get('error');
     if (oauthError) {
-      setError(`Google returned: ${oauthError}`);
+      setError(t('authCallback.google_returned', { error: oauthError }));
       return;
     }
 
@@ -31,7 +33,7 @@ export function AuthCallback() {
     const state = fragment.get('state');
 
     if (!idToken || !accessToken || !state) {
-      setError('Missing tokens in callback URL.');
+      setError(t('authCallback.missing_tokens'));
       return;
     }
 
@@ -41,30 +43,30 @@ export function AuthCallback() {
         window.history.replaceState(null, '', window.location.pathname);
         navigate('/', { replace: true });
       } catch (e: any) {
-        setError(e?.message ?? 'Authentication failed.');
+        setError(e?.message ?? t('authCallback.auth_failed'));
       }
     })();
-  }, [completeImplicitAuth, navigate]);
+  }, [completeImplicitAuth, navigate, t]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background font-sans px-6">
       <div className="max-w-md w-full text-center">
         {error ? (
           <>
-            <h1 className="font-display text-2xl font-semibold mb-3">Sign-in failed</h1>
+            <h1 className="font-display text-2xl font-semibold mb-3">{t('authCallback.failed_title')}</h1>
             <p className="text-sm text-muted-foreground mb-6">{error}</p>
             <button
               type="button"
               onClick={() => navigate('/', { replace: true })}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-sm font-semibold"
             >
-              Back to sign-in
+              {t('authCallback.back_to_signin')}
             </button>
           </>
         ) : (
           <>
-            <h1 className="font-display text-2xl font-semibold mb-3">Signing you in…</h1>
-            <p className="text-sm text-muted-foreground">Completing authentication, one moment.</p>
+            <h1 className="font-display text-2xl font-semibold mb-3">{t('authCallback.signing_in')}</h1>
+            <p className="text-sm text-muted-foreground">{t('authCallback.completing')}</p>
           </>
         )}
       </div>

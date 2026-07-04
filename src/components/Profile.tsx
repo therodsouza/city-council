@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { Wrench, Mail, LogOut, ArrowLeft, User, Calendar, MapPin, Phone, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import type { UserProfile } from '../contexts/AuthContext';
 import { deleteUserAccount } from '../services/UserService';
+import { dateLocale, genderLabel } from '../i18n/labels';
 
 interface ProfileProps {
   onBack: () => void;
 }
 
-function formatDob(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-AU', {
+function formatDob(iso: string, locale: string): string {
+  return new Date(iso).toLocaleDateString(locale, {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -44,17 +46,18 @@ function InfoRow({
 }
 
 function PersonalDetails({ p }: { p: UserProfile }) {
+  const { t, i18n } = useTranslation();
   const address = [p.address, p.suburb, p.postcode].filter(Boolean).join(', ');
   return (
     <div className="px-8 py-6 border-t border-border">
       <h3 className="text-xs uppercase tracking-widest font-mono text-muted-foreground mb-4">
-        Personal Details
+        {t('profile.personal_details')}
       </h3>
       <div className="space-y-4">
-        <InfoRow icon={Calendar} label="Date of Birth" value={formatDob(p.dateOfBirth)} />
-        <InfoRow icon={User} label="Gender" value={p.gender} />
-        <InfoRow icon={Phone} label="Phone Number" value={p.phone} />
-        <InfoRow icon={MapPin} label="Residential Address" value={address} last />
+        <InfoRow icon={Calendar} label={t('profile.dob')} value={formatDob(p.dateOfBirth, dateLocale(i18n.language))} />
+        <InfoRow icon={User} label={t('profile.gender')} value={genderLabel(p.gender, t)} />
+        <InfoRow icon={Phone} label={t('profile.phone')} value={p.phone} />
+        <InfoRow icon={MapPin} label={t('profile.address')} value={address} last />
       </div>
     </div>
   );
@@ -70,6 +73,7 @@ const GoogleLogo = () => (
 );
 
 export function Profile({ onBack }: ProfileProps) {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -82,7 +86,7 @@ export function Profile({ onBack }: ProfileProps) {
       await deleteUserAccount();
       await logout();
     } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : 'Account deletion failed. Please try again.');
+      setDeleteError(err instanceof Error ? err.message : t('profile.delete_error'));
       setDeleting(false);
       setConfirming(false);
     }
@@ -99,8 +103,8 @@ export function Profile({ onBack }: ProfileProps) {
               <Wrench className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="text-xs font-mono uppercase tracking-widest opacity-50">City Council</div>
-              <div className="text-lg font-display font-semibold">Public Works & Infrastructure</div>
+              <div className="text-xs font-mono uppercase tracking-widest opacity-50">{t('brand.council')}</div>
+              <div className="text-lg font-display font-semibold">{t('brand.department')}</div>
             </div>
           </div>
           <button
@@ -108,15 +112,15 @@ export function Profile({ onBack }: ProfileProps) {
             className="flex items-center gap-2 text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Back to Form</span>
+            <span className="hidden sm:inline">{t('profile.back_to_form')}</span>
           </button>
         </div>
       </header>
 
       <main className="flex-1 max-w-3xl w-full mx-auto px-6 py-10">
         <div className="mb-6">
-          <h1 className="font-display text-2xl font-bold text-foreground">Your Profile</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage your account and preferences</p>
+          <h1 className="font-display text-2xl font-bold text-foreground">{t('profile.title')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t('profile.subtitle')}</p>
         </div>
 
         <div className="bg-card border border-border rounded-sm overflow-hidden">
@@ -131,14 +135,14 @@ export function Profile({ onBack }: ProfileProps) {
               </div>
               <div>
                 <h2 className="font-display text-2xl font-bold text-foreground">{user.name}</h2>
-                <p className="text-sm text-muted-foreground mt-1">Council Service Portal User</p>
+                <p className="text-sm text-muted-foreground mt-1">{t('profile.portal_user')}</p>
               </div>
             </div>
           </div>
 
           <div className="px-8 py-6">
             <h3 className="text-xs uppercase tracking-widest font-mono text-muted-foreground mb-4">
-              Account Information
+              {t('profile.account_info')}
             </h3>
 
             <div className="space-y-4">
@@ -147,7 +151,7 @@ export function Profile({ onBack }: ProfileProps) {
                   <User className="w-5 h-5 text-primary" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-mono mb-1">Full Name</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-mono mb-1">{t('profile.full_name')}</p>
                   <p className="text-sm font-semibold text-foreground">{user.name}</p>
                 </div>
               </div>
@@ -157,7 +161,7 @@ export function Profile({ onBack }: ProfileProps) {
                   <Mail className="w-5 h-5 text-primary" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-mono mb-1">Email Address</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-mono mb-1">{t('profile.email')}</p>
                   <p className="text-sm font-semibold text-foreground">{user.email}</p>
                 </div>
               </div>
@@ -167,9 +171,9 @@ export function Profile({ onBack }: ProfileProps) {
                   <GoogleLogo />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-mono mb-1">Authentication Provider</p>
-                  <p className="text-sm font-semibold text-foreground">Google Account</p>
-                  <p className="text-xs text-muted-foreground mt-1">Connected via Google OAuth 2.0</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-mono mb-1">{t('profile.auth_provider')}</p>
+                  <p className="text-sm font-semibold text-foreground">{t('profile.google_account')}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t('profile.connected_via')}</p>
                 </div>
               </div>
             </div>
@@ -184,11 +188,11 @@ export function Profile({ onBack }: ProfileProps) {
               className="flex items-center gap-2 px-5 py-2.5 border border-destructive bg-white text-destructive text-sm font-semibold rounded-sm hover:bg-destructive hover:text-white transition-colors w-fit"
             >
               <LogOut className="w-4 h-4" />
-              Sign Out
+              {t('profile.sign_out')}
             </button>
 
             <div className="border-t border-border pt-4">
-              <p className="text-xs text-muted-foreground mb-3 font-mono uppercase tracking-wider">Danger Zone</p>
+              <p className="text-xs text-muted-foreground mb-3 font-mono uppercase tracking-wider">{t('profile.danger_zone')}</p>
               {!confirming ? (
                 <button
                   type="button"
@@ -196,13 +200,13 @@ export function Profile({ onBack }: ProfileProps) {
                   className="flex items-center gap-2 px-5 py-2.5 border border-destructive/40 bg-white text-destructive/70 text-sm font-semibold rounded-sm hover:border-destructive hover:text-destructive transition-colors w-fit"
                 >
                   <Trash2 className="w-4 h-4" />
-                  Delete My Account
+                  {t('profile.delete_account')}
                 </button>
               ) : (
                 <div className="border border-destructive/40 rounded-sm p-4 bg-destructive/5 max-w-md">
-                  <p className="text-sm font-semibold text-foreground mb-1">Are you sure?</p>
+                  <p className="text-sm font-semibold text-foreground mb-1">{t('profile.confirm_title')}</p>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Your profile will be permanently deleted. This cannot be undone.
+                    {t('profile.confirm_body')}
                   </p>
                   {deleteError && (
                     <p className="text-sm text-destructive mb-3">{deleteError}</p>
@@ -215,7 +219,7 @@ export function Profile({ onBack }: ProfileProps) {
                       className="flex items-center gap-2 px-4 py-2 bg-destructive text-white text-sm font-semibold rounded-sm hover:bg-destructive/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Trash2 className="w-4 h-4" />
-                      {deleting ? 'Deleting…' : 'Yes, delete my account'}
+                      {deleting ? t('profile.deleting') : t('profile.confirm_delete')}
                     </button>
                     <button
                       type="button"
@@ -223,7 +227,7 @@ export function Profile({ onBack }: ProfileProps) {
                       disabled={deleting}
                       className="px-4 py-2 border border-border text-sm font-semibold rounded-sm hover:bg-muted transition-colors disabled:opacity-50"
                     >
-                      Cancel
+                      {t('common.cancel')}
                     </button>
                   </div>
                 </div>
@@ -234,20 +238,18 @@ export function Profile({ onBack }: ProfileProps) {
 
         <div className="mt-6 p-4 border border-border rounded-sm bg-secondary/40">
           <p className="text-sm text-muted-foreground">
-            <strong className="text-foreground">Note:</strong> Your contact information will be
-            automatically pre-filled when submitting service requests. You can update your details
-            through your Google Account settings.
+            <strong className="text-foreground">{t('profile.note_label')}</strong> {t('profile.note_body')}
           </p>
         </div>
       </main>
 
       <footer className="border-t border-border py-6">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-          <span className="font-mono">© {new Date().getFullYear()} City Council. All rights reserved.</span>
+          <span className="font-mono">{t('footer.rights', { year: new Date().getFullYear() })}</span>
           <div className="flex gap-6">
-            <a href="#" className="hover:text-foreground transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-foreground transition-colors">Accessibility</a>
+            <a href="#" className="hover:text-foreground transition-colors">{t('footer.terms')}</a>
+            <a href="#" className="hover:text-foreground transition-colors">{t('footer.privacy')}</a>
+            <a href="#" className="hover:text-foreground transition-colors">{t('footer.accessibility')}</a>
           </div>
         </div>
       </footer>

@@ -50,7 +50,7 @@ async function hydrateUser(googleProfile: GoogleUserProfile): Promise<User> {
   const base = toUser(googleProfile);
   try {
     const saved = await getUserProfile();
-    const isAdmin = saved.role === 'admin';
+    const isAdmin = saved.role?.toUpperCase() === 'ADMIN';
     if (!saved.profileComplete) return { ...base, isAdmin };
     return {
       ...base,

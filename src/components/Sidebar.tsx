@@ -1,12 +1,6 @@
 import { MapPin, AlertTriangle, User, FileText, Check, Phone } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Step } from '../types/form';
-
-const STEPS = [
-  { number: 1 as Step, label: 'Location', icon: MapPin },
-  { number: 2 as Step, label: 'Issue Details', icon: AlertTriangle },
-  { number: 3 as Step, label: 'Your Details', icon: User },
-  { number: 4 as Step, label: 'Review & Submit', icon: FileText },
-];
 
 interface SidebarProps {
   step: Step;
@@ -14,6 +8,13 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ step, onStepClick }: SidebarProps) {
+  const { t } = useTranslation();
+  const STEPS = [
+    { number: 1 as Step, label: t('sidebar.step1'), icon: MapPin },
+    { number: 2 as Step, label: t('sidebar.step2'), icon: AlertTriangle },
+    { number: 3 as Step, label: t('sidebar.step3'), icon: User },
+    { number: 4 as Step, label: t('sidebar.step4'), icon: FileText },
+  ];
   return (
     <div>
       <nav>
@@ -55,7 +56,7 @@ export default function Sidebar({ step, onStepClick }: SidebarProps) {
                 </div>
                 <div>
                   <div className="text-xs font-mono uppercase tracking-wide text-muted-foreground">
-                    Step {s.number}
+                    {t('sidebar.step_num', { number: s.number })}
                   </div>
                   <div
                     className={`text-sm font-semibold ${
@@ -77,16 +78,16 @@ export default function Sidebar({ step, onStepClick }: SidebarProps) {
 
       <div className="mt-6 border border-border rounded-sm bg-card p-4">
         <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-2">
-          Need Assistance?
+          {t('sidebar.need_help')}
         </div>
         <p className="text-xs text-muted-foreground mb-3">
-          For urgent safety hazards, contact us directly:
+          {t('sidebar.urgent')}
         </p>
         <div className="flex items-center gap-2">
           <Phone className="w-4 h-4 text-primary" />
           <span className="text-base font-semibold text-foreground">1300 000 000</span>
         </div>
-        <div className="text-xs text-muted-foreground mt-1">Available 24 hours, 7 days</div>
+        <div className="text-xs text-muted-foreground mt-1">{t('sidebar.available')}</div>
       </div>
     </div>
   );

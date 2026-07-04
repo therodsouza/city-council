@@ -5,7 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL as string | undefined;
 
 interface GetUserProfileResponse {
   profileComplete: boolean;
-  role?: 'admin' | 'user';
+  role?: string;
   name?: string;
   phone?: string;
   dateOfBirth?: string;

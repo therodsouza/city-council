@@ -2,9 +2,12 @@ import { useState } from 'react';
 import {
   Wrench, Calendar, MapPin, User, ChevronRight, AlertCircle, Shield, Check, Phone,
 } from 'lucide-react';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import type { UserProfile } from '../contexts/AuthContext';
 import { putUserProfile } from '../services/UserService';
+import { GENDER_OPTIONS } from '../i18n/labels';
 
 interface FieldError {
   dateOfBirth?: string;
@@ -14,14 +17,6 @@ interface FieldError {
   suburb?: string;
   postcode?: string;
 }
-
-const GENDER_OPTIONS = [
-  'Man',
-  'Woman',
-  'Non-binary',
-  'Prefer not to say',
-  'Other',
-];
 
 const inputBase =
   'w-full px-3 py-2.5 border rounded-sm bg-white text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors';
@@ -65,33 +60,34 @@ function Field({
   );
 }
 
-function validate(form: UserProfile): FieldError {
+function validate(form: UserProfile, t: TFunction): FieldError {
   const errors: FieldError = {};
   const today = new Date();
 
   if (!form.dateOfBirth) {
-    errors.dateOfBirth = 'Date of birth is required.';
+    errors.dateOfBirth = t('onboarding.err_dob_required');
   } else {
     const dob = new Date(form.dateOfBirth);
     const age =
       today.getFullYear() -
       dob.getFullYear() -
       (today < new Date(today.getFullYear(), dob.getMonth(), dob.getDate()) ? 1 : 0);
-    if (age < 16) errors.dateOfBirth = 'You must be at least 16 years old.';
-    else if (age > 120) errors.dateOfBirth = 'Enter a valid date of birth.';
+    if (age < 16) errors.dateOfBirth = t('onboarding.err_dob_min');
+    else if (age > 120) errors.dateOfBirth = t('onboarding.err_dob_valid');
   }
 
-  if (!form.gender) errors.gender = 'Please select an option.';
-  if (!form.phone.trim()) errors.phone = 'Phone number is required.';
-  if (!form.address.trim()) errors.address = 'Street address is required.';
-  if (!form.suburb.trim()) errors.suburb = 'Suburb is required.';
+  if (!form.gender) errors.gender = t('onboarding.err_gender');
+  if (!form.phone.trim()) errors.phone = t('onboarding.err_phone');
+  if (!form.address.trim()) errors.address = t('onboarding.err_address');
+  if (!form.suburb.trim()) errors.suburb = t('onboarding.err_suburb');
   if (form.postcode && !/^\d{4}$/.test(form.postcode))
-    errors.postcode = 'Postcode must be 4 digits.';
+    errors.postcode = t('onboarding.err_postcode');
 
   return errors;
 }
 
 export function OnboardingForm() {
+  const { t } = useTranslation();
   const { user, completeProfile } = useAuth();
   const [form, setForm] = useState<UserProfile>({
     dateOfBirth: '',
@@ -112,7 +108,7 @@ export function OnboardingForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const errs = validate(form);
+    const errs = validate(form, t);
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
       return;
@@ -124,7 +120,7 @@ export function OnboardingForm() {
       setSubmitted(true);
       setTimeout(() => completeProfile(form), 800);
     } catch (err: unknown) {
-      setApiError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      setApiError(err instanceof Error ? err.message : t('onboarding.err_api_generic'));
       setSubmitting(false);
     }
   }
@@ -139,8 +135,8 @@ export function OnboardingForm() {
               <Wrench className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="text-xs font-mono uppercase tracking-widest opacity-50">City Council</div>
-              <div className="text-lg font-display font-semibold">Public Works & Infrastructure</div>
+              <div className="text-xs font-mono uppercase tracking-widest opacity-50">{t('brand.council')}</div>
+              <div className="text-lg font-display font-semibold">{t('brand.department')}</div>
             </div>
           </div>
           {user && (
@@ -157,11 +153,10 @@ export function OnboardingForm() {
       <main className="flex-1 max-w-2xl w-full mx-auto px-4 sm:px-6 py-10">
         {/* Page heading */}
         <div className="mb-6">
-          <p className="text-xs font-mono uppercase tracking-widest text-accent mb-2">New Account</p>
-          <h1 className="font-display text-3xl font-bold text-foreground">Complete Your Profile</h1>
+          <p className="text-xs font-mono uppercase tracking-widest text-accent mb-2">{t('onboarding.new_account')}</p>
+          <h1 className="font-display text-3xl font-bold text-foreground">{t('onboarding.title')}</h1>
           <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-            Before accessing the portal, we need a few more details. This information helps us
-            verify your eligibility and process requests accurately.
+            {t('onboarding.subtitle')}
           </p>
         </div>
 
@@ -171,21 +166,21 @@ export function OnboardingForm() {
             <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
               <Check className="w-3 h-3 text-white" />
             </div>
-            <span className="text-xs font-mono text-muted-foreground">Google Sign-In</span>
+            <span className="text-xs font-mono text-muted-foreground">{t('onboarding.step_google')}</span>
           </div>
           <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 flex-shrink-0" />
           <div className="flex items-center gap-1.5">
             <div className="w-5 h-5 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
               <span className="text-xs text-white font-bold">2</span>
             </div>
-            <span className="text-xs font-mono font-medium text-foreground">Profile Details</span>
+            <span className="text-xs font-mono font-medium text-foreground">{t('onboarding.step_profile')}</span>
           </div>
           <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 flex-shrink-0" />
           <div className="flex items-center gap-1.5">
             <div className="w-5 h-5 rounded-full border border-border bg-card flex items-center justify-center flex-shrink-0">
               <span className="text-xs text-muted-foreground">3</span>
             </div>
-            <span className="text-xs font-mono text-muted-foreground">Portal Access</span>
+            <span className="text-xs font-mono text-muted-foreground">{t('onboarding.step_portal')}</span>
           </div>
         </div>
 
@@ -194,8 +189,8 @@ export function OnboardingForm() {
             <div className="w-14 h-14 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center mx-auto mb-4 text-2xl">
               ✓
             </div>
-            <h2 className="font-display text-xl font-bold text-foreground mb-2">Profile Complete</h2>
-            <p className="text-sm text-muted-foreground">Taking you to the portal…</p>
+            <h2 className="font-display text-xl font-bold text-foreground mb-2">{t('onboarding.complete_title')}</h2>
+            <p className="text-sm text-muted-foreground">{t('onboarding.complete_sub')}</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} noValidate>
@@ -205,11 +200,11 @@ export function OnboardingForm() {
                 <div className="flex items-center gap-2 px-6 py-3 border-b border-border bg-muted/10">
                   <User className="w-4 h-4 text-primary/60" />
                   <span className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
-                    Personal Information
+                    {t('onboarding.section_personal')}
                   </span>
                 </div>
                 <div className="px-6 py-5 space-y-4">
-                  <Field label="Date of Birth" required error={errors.dateOfBirth}>
+                  <Field label={t('onboarding.label_dob')} required error={errors.dateOfBirth}>
                     <div className="relative">
                       <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50 pointer-events-none" />
                       <input
@@ -221,25 +216,25 @@ export function OnboardingForm() {
                     </div>
                   </Field>
 
-                  <Field label="Gender" required error={errors.gender}>
+                  <Field label={t('onboarding.label_gender')} required error={errors.gender}>
                     <select
                       value={form.gender}
                       onChange={set('gender')}
                       className={fieldClass(errors.gender)}
                     >
-                      <option value="">Select…</option>
+                      <option value="">{t('onboarding.select_placeholder')}</option>
                       {GENDER_OPTIONS.map((opt) => (
-                        <option key={opt} value={opt}>{opt}</option>
+                        <option key={opt.value} value={opt.value}>{t(`gender.${opt.key}`)}</option>
                       ))}
                     </select>
                   </Field>
 
-                  <Field label="Phone Number" required error={errors.phone}>
+                  <Field label={t('onboarding.label_phone')} required error={errors.phone}>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50 pointer-events-none" />
                       <input
                         type="tel"
-                        placeholder="+61400000000"
+                        placeholder={t('onboarding.phone_placeholder')}
                         value={form.phone}
                         onChange={set('phone')}
                         className={`${fieldClass(errors.phone)} pl-9`}
@@ -254,14 +249,14 @@ export function OnboardingForm() {
                 <div className="flex items-center gap-2 px-6 py-3 border-b border-border bg-muted/10">
                   <MapPin className="w-4 h-4 text-primary/60" />
                   <span className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
-                    Residential Address
+                    {t('onboarding.section_address')}
                   </span>
                 </div>
                 <div className="px-6 py-5 space-y-4">
-                  <Field label="Street Address" required error={errors.address}>
+                  <Field label={t('onboarding.label_address')} required error={errors.address}>
                     <input
                       type="text"
-                      placeholder="123 Example Street"
+                      placeholder={t('onboarding.address_placeholder')}
                       value={form.address}
                       onChange={set('address')}
                       className={fieldClass(errors.address)}
@@ -269,19 +264,19 @@ export function OnboardingForm() {
                   </Field>
 
                   <div className="grid grid-cols-2 gap-4">
-                    <Field label="Suburb" required error={errors.suburb}>
+                    <Field label={t('onboarding.label_suburb')} required error={errors.suburb}>
                       <input
                         type="text"
-                        placeholder="Suburb"
+                        placeholder={t('onboarding.suburb_placeholder')}
                         value={form.suburb}
                         onChange={set('suburb')}
                         className={fieldClass(errors.suburb)}
                       />
                     </Field>
-                    <Field label="Postcode" hint="Optional" error={errors.postcode}>
+                    <Field label={t('onboarding.label_postcode')} hint={t('onboarding.postcode_hint')} error={errors.postcode}>
                       <input
                         type="text"
-                        placeholder="0000"
+                        placeholder={t('onboarding.postcode_placeholder')}
                         maxLength={4}
                         value={form.postcode}
                         onChange={set('postcode')}
@@ -296,8 +291,7 @@ export function OnboardingForm() {
             {/* Privacy note */}
             <p className="flex items-start gap-2 text-xs text-muted-foreground/70 font-mono leading-relaxed mt-4 mb-4">
               <Shield className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-              Your information is stored securely and used solely for council service purposes.
-              See our Privacy Policy for details.
+              {t('onboarding.privacy_note')}
             </p>
 
             {/* API error */}
@@ -314,7 +308,7 @@ export function OnboardingForm() {
               disabled={submitting}
               className="w-full py-3 bg-primary text-primary-foreground text-sm font-semibold rounded-sm hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {submitting ? 'Saving…' : 'Continue to Portal'}
+              {submitting ? t('onboarding.saving') : t('onboarding.submit')}
               {!submitting && <ChevronRight className="w-4 h-4" />}
             </button>
           </form>

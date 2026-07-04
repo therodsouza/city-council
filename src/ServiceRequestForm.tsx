@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FormData, Step } from './types/form';
 import { User } from './contexts/AuthContext';
 import { SiteHeader } from './components/SiteHeader';
@@ -32,6 +33,7 @@ const EMPTY_FORM: Omit<FormData, 'name' | 'email'> = {
 };
 
 export function ServiceRequestForm({ user, onProfileClick, onTrackClick, onMapClick }: Props) {
+  const { t } = useTranslation();
   const [step, setStep] = useState<Step>(1);
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -111,7 +113,7 @@ export function ServiceRequestForm({ user, onProfileClick, onTrackClick, onMapCl
                       setReferenceNumber(refNum);
                       setSubmitted(true);
                     } catch (e: unknown) {
-                      setSubmitError(e instanceof Error ? e.message : 'Submission failed. Please try again.');
+                      setSubmitError(e instanceof Error ? e.message : t('common.submit_failed'));
                     }
                   }}
                   onEdit={setStep}
@@ -126,12 +128,12 @@ export function ServiceRequestForm({ user, onProfileClick, onTrackClick, onMapCl
       <footer className="border-t border-border py-6">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
           <span className="font-mono">
-            © {new Date().getFullYear()} City Council. All rights reserved.
+            {t('footer.rights', { year: new Date().getFullYear() })}
           </span>
           <div className="flex gap-6">
-            <a href="#" className="hover:text-foreground transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-foreground transition-colors">Accessibility</a>
+            <a href="#" className="hover:text-foreground transition-colors">{t('footer.terms')}</a>
+            <a href="#" className="hover:text-foreground transition-colors">{t('footer.privacy')}</a>
+            <a href="#" className="hover:text-foreground transition-colors">{t('footer.accessibility')}</a>
           </div>
         </div>
       </footer>

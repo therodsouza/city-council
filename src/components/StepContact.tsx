@@ -1,4 +1,5 @@
 import { ArrowLeft, ArrowRight, Mail, Phone, Shield } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { FormData } from '../types/form';
 import { FieldLabel, TextInput } from './FormFields';
 
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export default function StepContact({ form, setVal, onNext, onBack }: Props) {
+  const { t } = useTranslation();
   const canProceed = !!(
     form.name.trim() &&
     form.email.includes('@') &&
@@ -19,9 +21,9 @@ export default function StepContact({ form, setVal, onNext, onBack }: Props) {
   return (
     <div>
       <div className="px-8 py-6 border-b border-border">
-        <h2 className="text-xl font-display font-bold text-foreground">Your Details</h2>
+        <h2 className="text-xl font-display font-bold text-foreground">{t('stepContact.title')}</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Provide your contact information so we can keep you informed about your request.
+          {t('stepContact.subtitle')}
         </p>
       </div>
 
@@ -29,25 +31,24 @@ export default function StepContact({ form, setVal, onNext, onBack }: Props) {
         <div className="flex items-start gap-3 p-4 border border-border bg-secondary/40 rounded-sm">
           <Shield className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
           <p className="text-sm text-muted-foreground">
-            Your personal details are collected solely for the purpose of processing this service
-            request and will not be shared with third parties without your consent.
+            {t('stepContact.privacy')}
           </p>
         </div>
 
         <div>
-          <FieldLabel htmlFor="name" required>Full Name</FieldLabel>
+          <FieldLabel htmlFor="name" required>{t('stepContact.full_name')}</FieldLabel>
           <TextInput
             id="name"
             value={form.name}
             onChange={e => setVal('name', e.target.value)}
-            placeholder="e.g. Sarah Thompson"
+            placeholder={t('stepContact.name_placeholder')}
             autoComplete="name"
           />
         </div>
 
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <FieldLabel htmlFor="email" required>Email Address</FieldLabel>
+            <FieldLabel htmlFor="email" required>{t('stepContact.email')}</FieldLabel>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <TextInput
@@ -55,7 +56,7 @@ export default function StepContact({ form, setVal, onNext, onBack }: Props) {
                 type="email"
                 value={form.email}
                 onChange={e => setVal('email', e.target.value)}
-                placeholder="you@example.com"
+                placeholder={t('stepContact.email_placeholder')}
                 autoComplete="email"
                 className="pl-9"
               />
@@ -63,8 +64,8 @@ export default function StepContact({ form, setVal, onNext, onBack }: Props) {
           </div>
           <div>
             <FieldLabel htmlFor="phone">
-              Phone Number{' '}
-              <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+              {t('stepContact.phone')}{' '}
+              <span className="text-xs font-normal text-muted-foreground">{t('stepContact.optional')}</span>
             </FieldLabel>
             <div className="relative">
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
@@ -73,7 +74,7 @@ export default function StepContact({ form, setVal, onNext, onBack }: Props) {
                 type="tel"
                 value={form.phone}
                 onChange={e => setVal('phone', e.target.value)}
-                placeholder="e.g. 0412 345 678"
+                placeholder={t('stepContact.phone_placeholder')}
                 autoComplete="tel"
                 className="pl-9"
               />
@@ -90,10 +91,10 @@ export default function StepContact({ form, setVal, onNext, onBack }: Props) {
           />
           <div>
             <span className="text-sm font-semibold text-foreground">
-              Receive status updates by email
+              {t('stepContact.updates_label')}
             </span>
             <p className="text-xs text-muted-foreground mt-0.5">
-              We will notify you when your request is assessed and resolved.
+              {t('stepContact.updates_sub')}
             </p>
           </div>
         </label>
@@ -105,16 +106,16 @@ export default function StepContact({ form, setVal, onNext, onBack }: Props) {
           onClick={onBack}
           className="flex items-center gap-2 px-4 py-2 border border-border bg-white text-foreground text-sm font-semibold rounded-sm hover:border-primary/40 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Back
+          <ArrowLeft className="w-4 h-4" /> {t('common.back')}
         </button>
-        <span className="text-xs font-mono text-muted-foreground">3 of 4</span>
+        <span className="text-xs font-mono text-muted-foreground">{t('common.step_counter', { current: 3, total: 4 })}</span>
         <button
           type="button"
           disabled={!canProceed}
           onClick={onNext}
           className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-sm hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
-          Continue <ArrowRight className="w-4 h-4" />
+          {t('common.continue')} <ArrowRight className="w-4 h-4" />
         </button>
       </div>
     </div>

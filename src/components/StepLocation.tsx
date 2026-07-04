@@ -1,20 +1,11 @@
 import { useState } from 'react';
 import { ArrowRight, LocateFixed, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { FormData } from '../types/form';
 import { FieldLabel, TextInput, TextArea } from './FormFields';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { reverseGeocode } from '../services/GeocodeService';
-
-const SITE_TYPES = [
-  'Road / Street',
-  'Footpath / Pathway',
-  'Park / Reserve',
-  'Public Building',
-  'Stormwater / Drain',
-  'Street Lighting',
-  'Public Toilet',
-  'Other',
-];
+import { SITE_TYPES } from '../i18n/labels';
 
 interface Props {
   form: FormData;
@@ -24,6 +15,7 @@ interface Props {
 }
 
 export default function StepLocation({ form, setVal, setCoords, onNext }: Props) {
+  const { t } = useTranslation();
   const canProceed = !!(form.address.trim() && form.suburb.trim() && form.siteType);
   const geo = useGeolocation();
   const [geocoding, setGeocoding] = useState(false);
@@ -41,7 +33,7 @@ export default function StepLocation({ form, setVal, setCoords, onNext }: Props)
         setVal('postcode', result.postcode);
         setCoords(coords.latitude, coords.longitude);
       } catch {
-        setGeocodeError('Could not look up address. Please enter it manually.');
+        setGeocodeError(t('stepLocation.geocode_error'));
       } finally {
         setGeocoding(false);
       }
@@ -51,9 +43,9 @@ export default function StepLocation({ form, setVal, setCoords, onNext }: Props)
   return (
     <div>
       <div className="px-8 py-6 border-b border-border">
-        <h2 className="text-xl font-display font-bold text-foreground">Location Details</h2>
+        <h2 className="text-xl font-display font-bold text-foreground">{t('stepLocation.title')}</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Tell us exactly where the issue is located so we can dispatch the right team.
+          {t('stepLocation.subtitle')}
         </p>
       </div>
 
@@ -70,7 +62,7 @@ export default function StepLocation({ form, setVal, setCoords, onNext }: Props)
             ) : (
               <LocateFixed className="w-4 h-4" />
             )}
-            {locating ? 'Detecting location…' : 'Use my location'}
+            {locating ? t('stepLocation.detecting') : t('stepLocation.use_my_location')}
           </button>
           {(geo.error || geocodeError) && (
             <p className="text-xs text-red-600">{geo.error ?? geocodeError}</p>
@@ -79,34 +71,34 @@ export default function StepLocation({ form, setVal, setCoords, onNext }: Props)
 
         <div className="grid sm:grid-cols-3 gap-4">
           <div className="sm:col-span-2">
-            <FieldLabel htmlFor="address" required>Street Address</FieldLabel>
+            <FieldLabel htmlFor="address" required>{t('stepLocation.street_address')}</FieldLabel>
             <TextInput
               id="address"
               value={form.address}
               onChange={e => setVal('address', e.target.value)}
-              placeholder="e.g. 42 Harbour Road"
+              placeholder={t('stepLocation.address_placeholder')}
               autoComplete="street-address"
             />
           </div>
           <div>
-            <FieldLabel htmlFor="postcode">Postcode</FieldLabel>
+            <FieldLabel htmlFor="postcode">{t('stepLocation.postcode')}</FieldLabel>
             <TextInput
               id="postcode"
               value={form.postcode}
               onChange={e => setVal('postcode', e.target.value)}
-              placeholder="e.g. 6003"
+              placeholder={t('stepLocation.postcode_placeholder')}
               autoComplete="postal-code"
             />
           </div>
         </div>
 
         <div>
-          <FieldLabel htmlFor="suburb" required>Suburb / Area</FieldLabel>
+          <FieldLabel htmlFor="suburb" required>{t('stepLocation.suburb')}</FieldLabel>
           <TextInput
             id="suburb"
             value={form.suburb}
             onChange={e => setVal('suburb', e.target.value)}
-            placeholder="e.g. Northbridge"
+            placeholder={t('stepLocation.suburb_placeholder')}
             autoComplete="address-level2"
           />
         </div>
@@ -114,34 +106,34 @@ export default function StepLocation({ form, setVal, setCoords, onNext }: Props)
         <div>
           <FieldLabel
             htmlFor="locationNote"
-            hint="Describe nearby landmarks or access points to help us find the exact spot."
+            hint={t('stepLocation.notes_hint')}
           >
-            Additional Location Notes
+            {t('stepLocation.notes_label')}
           </FieldLabel>
           <TextArea
             id="locationNote"
             value={form.locationNote}
             onChange={e => setVal('locationNote', e.target.value)}
-            placeholder="e.g. Adjacent to the bus shelter, opposite the car park entrance on the eastern footpath…"
+            placeholder={t('stepLocation.notes_placeholder')}
             rows={3}
           />
         </div>
 
         <div>
-          <FieldLabel required>Site Type</FieldLabel>
+          <FieldLabel required>{t('stepLocation.site_type')}</FieldLabel>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1">
             {SITE_TYPES.map(type => (
               <button
-                key={type}
+                key={type.value}
                 type="button"
-                onClick={() => setVal('siteType', type)}
+                onClick={() => setVal('siteType', type.value)}
                 className={`px-3 py-2 text-sm border rounded-sm transition-colors text-left ${
-                  form.siteType === type
+                  form.siteType === type.value
                     ? 'border-primary bg-primary text-primary-foreground'
                     : 'border-border bg-white text-muted-foreground hover:border-primary/40 hover:text-foreground'
                 }`}
               >
-                {type}
+                {t(`siteTypes.${type.key}`)}
               </button>
             ))}
           </div>
@@ -150,14 +142,14 @@ export default function StepLocation({ form, setVal, setCoords, onNext }: Props)
 
       <div className="px-8 py-4 border-t border-border flex items-center justify-between">
         <div />
-        <span className="text-xs font-mono text-muted-foreground">1 of 4</span>
+        <span className="text-xs font-mono text-muted-foreground">{t('common.step_counter', { current: 1, total: 4 })}</span>
         <button
           type="button"
           disabled={!canProceed}
           onClick={onNext}
           className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-sm hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
-          Continue <ArrowRight className="w-4 h-4" />
+          {t('common.continue')} <ArrowRight className="w-4 h-4" />
         </button>
       </div>
     </div>

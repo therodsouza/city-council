@@ -1,5 +1,7 @@
 import { Wrench, Map } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { User } from '../contexts/AuthContext';
+import { dateLocale } from '../i18n/labels';
 
 interface Props {
   user: User | null;
@@ -10,7 +12,8 @@ interface Props {
 }
 
 export function SiteHeader({ user, onProfileClick, onTrackClick, onMapClick, adminLabel }: Props) {
-  const date = new Date().toLocaleDateString('en-AU', {
+  const { t, i18n } = useTranslation();
+  const date = new Date().toLocaleDateString(dateLocale(i18n.language), {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -25,17 +28,17 @@ export function SiteHeader({ user, onProfileClick, onTrackClick, onMapClick, adm
           </div>
           <div>
             <div className="text-xs font-mono uppercase tracking-widest opacity-50">
-              City Council
+              {t('brand.council')}
             </div>
             <div className="text-lg font-display font-semibold">
-              Public Works & Infrastructure
+              {t('brand.department')}
             </div>
           </div>
         </div>
         <div className="flex items-center gap-4">
           <div className="hidden sm:block text-right">
             <div className="text-xs font-mono uppercase tracking-wide opacity-70">
-              {adminLabel ? 'Admin Console' : 'Online Services'}
+              {adminLabel ? t('header.admin_console') : t('header.online_services')}
             </div>
             <div className="text-sm opacity-90">{date}</div>
           </div>
@@ -45,18 +48,18 @@ export function SiteHeader({ user, onProfileClick, onTrackClick, onMapClick, adm
               onClick={onTrackClick}
               className="inline-flex px-3 py-2.5 rounded-sm bg-primary-foreground/10 hover:bg-primary-foreground/20 border border-primary-foreground/20 text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors"
             >
-              Track Requests
+              {t('header.track_requests')}
             </button>
           )}
           {onMapClick && (
             <button
               type="button"
               onClick={onMapClick}
-              className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 rounded-sm bg-accent/80 hover:bg-accent transition-colors border border-accent text-sm text-white"
-              title="Request Map (Admin)"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-sm bg-accent/80 hover:bg-accent transition-colors border border-accent text-sm text-white"
+              title={t('header.request_map_title')}
             >
               <Map className="w-4 h-4" />
-              Request Map
+              {t('header.request_map')}
             </button>
           )}
           {user && (
@@ -64,8 +67,8 @@ export function SiteHeader({ user, onProfileClick, onTrackClick, onMapClick, adm
               type="button"
               onClick={onProfileClick}
               className="flex items-center gap-2 px-3 py-2 rounded-sm bg-primary-foreground/10 hover:bg-primary-foreground/20 transition-colors border border-primary-foreground/20"
-              title="View Profile"
-              aria-label="View your profile"
+              title={t('header.view_profile_title')}
+              aria-label={t('header.view_profile_aria')}
             >
               <img
                 src={user.photo}

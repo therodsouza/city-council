@@ -8,6 +8,7 @@ import { TrackRequests } from './components/TrackRequests';
 import { AuthCallback } from './components/AuthCallback';
 import { ServiceRequestForm } from './ServiceRequestForm';
 import { RequestMap } from './components/RequestMap';
+import { LanguageSwitcher } from './components/LanguageSwitcher';
 
 type Page = 'form' | 'profile' | 'track' | 'map';
 
@@ -61,6 +62,7 @@ export default function App() {
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="*" element={<AppShell />} />
         </Routes>
+        <LanguageSwitcher />
       </AuthProvider>
     </BrowserRouter>
   );

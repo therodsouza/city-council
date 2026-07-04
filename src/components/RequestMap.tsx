@@ -3,15 +3,16 @@ import {
   ArrowLeft, MapPin, Map, HardHat, Paintbrush, Wrench, Droplets,
   Zap, Leaf, Trash2, Building2, X, Layers, Filter,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { User } from '../contexts/AuthContext';
 import { SiteHeader } from './SiteHeader';
+import { categoryLabel, statusLabel, dateLocale } from '../i18n/labels';
 
 type Status = 'received' | 'under_review' | 'in_progress' | 'resolved' | 'closed';
 
 interface MapRequest {
   referenceNumber: string;
   category: string;
-  categoryLabel: string;
   status: Status;
   createdAt: Date;
   address: string;
@@ -29,17 +30,16 @@ interface RequestMapProps {
 const STATUS_ORDER: Status[] = ['received', 'under_review', 'in_progress', 'resolved', 'closed'];
 
 const STATUS_CONFIG: Record<Status, {
-  label: string;
   dot: string;
   pill: string;
   text: string;
   pin: string;
 }> = {
-  received:     { label: 'Received',     dot: 'bg-sky-400',     pill: 'bg-sky-50 border border-sky-200',        text: 'text-sky-800',     pin: 'bg-sky-500' },
-  under_review: { label: 'Under Review', dot: 'bg-violet-400',  pill: 'bg-violet-50 border border-violet-200',  text: 'text-violet-800',  pin: 'bg-violet-500' },
-  in_progress:  { label: 'In Progress',  dot: 'bg-amber-400',   pill: 'bg-amber-50 border border-amber-200',    text: 'text-amber-800',   pin: 'bg-amber-500' },
-  resolved:     { label: 'Resolved',     dot: 'bg-emerald-500', pill: 'bg-emerald-50 border border-emerald-200', text: 'text-emerald-800', pin: 'bg-emerald-500' },
-  closed:       { label: 'Closed',       dot: 'bg-neutral-400', pill: 'bg-neutral-100 border border-neutral-200', text: 'text-neutral-600', pin: 'bg-neutral-400' },
+  received:     { dot: 'bg-sky-400',     pill: 'bg-sky-50 border border-sky-200',        text: 'text-sky-800',     pin: 'bg-sky-500' },
+  under_review: { dot: 'bg-violet-400',  pill: 'bg-violet-50 border border-violet-200',  text: 'text-violet-800',  pin: 'bg-violet-500' },
+  in_progress:  { dot: 'bg-amber-400',   pill: 'bg-amber-50 border border-amber-200',    text: 'text-amber-800',   pin: 'bg-amber-500' },
+  resolved:     { dot: 'bg-emerald-500', pill: 'bg-emerald-50 border border-emerald-200', text: 'text-emerald-800', pin: 'bg-emerald-500' },
+  closed:       { dot: 'bg-neutral-400', pill: 'bg-neutral-100 border border-neutral-200', text: 'text-neutral-600', pin: 'bg-neutral-400' },
 };
 
 const ACTIVE_STATUSES: Status[] = ['received', 'under_review', 'in_progress', 'resolved'];
@@ -55,17 +55,6 @@ const CATEGORY_ICONS: Record<string, React.ElementType> = {
   other:    Building2,
 };
 
-const CATEGORY_LABELS: Record<string, string> = {
-  pothole:  'Pothole / Road Damage',
-  graffiti: 'Graffiti / Vandalism',
-  broken:   'Broken Equipment',
-  flooding: 'Flooding / Water Damage',
-  lighting: 'Street Light Outage',
-  trees:    'Fallen Tree / Branch',
-  dumping:  'Illegal Dumping / Litter',
-  other:    'Other Infrastructure',
-};
-
 const LAT_MIN = -33.915;
 const LAT_MAX = -33.878;
 const LNG_MIN = 151.150;
@@ -75,7 +64,6 @@ const ALL_REQUESTS: MapRequest[] = [
   {
     referenceNumber: 'SR-2026-84231',
     category: 'pothole',
-    categoryLabel: CATEGORY_LABELS.pothole,
     status: 'received',
     createdAt: new Date('2026-06-10'),
     address: '142 Darling Street',
@@ -86,7 +74,6 @@ const ALL_REQUESTS: MapRequest[] = [
   {
     referenceNumber: 'SR-2026-84187',
     category: 'graffiti',
-    categoryLabel: CATEGORY_LABELS.graffiti,
     status: 'under_review',
     createdAt: new Date('2026-06-08'),
     address: '78 Norton Street',
@@ -97,7 +84,6 @@ const ALL_REQUESTS: MapRequest[] = [
   {
     referenceNumber: 'SR-2026-84053',
     category: 'lighting',
-    categoryLabel: CATEGORY_LABELS.lighting,
     status: 'in_progress',
     createdAt: new Date('2026-06-05'),
     address: '23 Annandale Street',
@@ -108,7 +94,6 @@ const ALL_REQUESTS: MapRequest[] = [
   {
     referenceNumber: 'SR-2026-83901',
     category: 'trees',
-    categoryLabel: CATEGORY_LABELS.trees,
     status: 'resolved',
     createdAt: new Date('2026-06-01'),
     address: '5 Glebe Point Road',
@@ -119,7 +104,6 @@ const ALL_REQUESTS: MapRequest[] = [
   {
     referenceNumber: 'SR-2026-83744',
     category: 'flooding',
-    categoryLabel: CATEGORY_LABELS.flooding,
     status: 'closed',
     createdAt: new Date('2026-05-28'),
     address: '310 Victoria Road',
@@ -130,7 +114,6 @@ const ALL_REQUESTS: MapRequest[] = [
   {
     referenceNumber: 'SR-2026-84312',
     category: 'broken',
-    categoryLabel: CATEGORY_LABELS.broken,
     status: 'received',
     createdAt: new Date('2026-06-12'),
     address: '88 Parramatta Road',
@@ -141,7 +124,6 @@ const ALL_REQUESTS: MapRequest[] = [
   {
     referenceNumber: 'SR-2026-84098',
     category: 'dumping',
-    categoryLabel: CATEGORY_LABELS.dumping,
     status: 'in_progress',
     createdAt: new Date('2026-06-06'),
     address: '15 Pyrmont Bridge Road',
@@ -152,7 +134,6 @@ const ALL_REQUESTS: MapRequest[] = [
   {
     referenceNumber: 'SR-2026-83812',
     category: 'pothole',
-    categoryLabel: CATEGORY_LABELS.pothole,
     status: 'under_review',
     createdAt: new Date('2026-05-30'),
     address: '201 Abercrombie Street',
@@ -167,6 +148,7 @@ function toPercent(val: number, min: number, max: number) {
 }
 
 function Pin({ req, selected, onClick }: { req: MapRequest; selected: boolean; onClick: () => void }) {
+  const { t } = useTranslation();
   const left = toPercent(req.lng, LNG_MIN, LNG_MAX);
   const top = 100 - toPercent(req.lat, LAT_MIN, LAT_MAX);
   const { pin } = STATUS_CONFIG[req.status];
@@ -177,7 +159,7 @@ function Pin({ req, selected, onClick }: { req: MapRequest; selected: boolean; o
       onClick={onClick}
       style={{ left: `${left}%`, top: `${top}%` }}
       className="absolute -translate-x-1/2 -translate-y-full"
-      aria-label={`${req.categoryLabel} at ${req.address}`}
+      aria-label={t('map.pin_aria', { category: categoryLabel(req.category, t), address: req.address })}
     >
       <div className={`transition-transform ${selected ? 'scale-125' : 'hover:scale-110'}`}>
         <div
@@ -192,16 +174,18 @@ function Pin({ req, selected, onClick }: { req: MapRequest; selected: boolean; o
 }
 
 function StatusDot({ status }: { status: Status }) {
-  const { dot, pill, text, label } = STATUS_CONFIG[status];
+  const { t } = useTranslation();
+  const { dot, pill, text } = STATUS_CONFIG[status];
   return (
     <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm text-xs font-mono border ${pill} ${text}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
-      {label}
+      {statusLabel(status, t)}
     </span>
   );
 }
 
 function DetailPanel({ req, onClose }: { req: MapRequest; onClose: () => void }) {
+  const { t, i18n } = useTranslation();
   const Icon = CATEGORY_ICONS[req.category] ?? Building2;
   return (
     <div className="absolute bottom-4 left-4 right-4 sm:left-auto sm:w-72 bg-card border border-border rounded-sm shadow-lg z-20">
@@ -211,28 +195,28 @@ function DetailPanel({ req, onClose }: { req: MapRequest; onClose: () => void })
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-xs font-mono text-muted-foreground">{req.referenceNumber}</div>
-          <div className="text-sm font-semibold text-foreground truncate">{req.categoryLabel}</div>
+          <div className="text-sm font-semibold text-foreground truncate">{categoryLabel(req.category, t)}</div>
         </div>
         <button
           type="button"
           onClick={onClose}
           className="p-1 rounded-sm hover:bg-muted/60 flex-shrink-0"
-          aria-label="Close"
+          aria-label={t('map.close')}
         >
           <X className="w-4 h-4 text-muted-foreground" />
         </button>
       </div>
       <div className="p-4 space-y-2.5">
         <div>
-          <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-1">Location</div>
+          <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-1">{t('map.location')}</div>
           <div className="text-sm text-foreground font-medium">{req.address}</div>
           <div className="text-xs text-muted-foreground">{req.suburb}</div>
         </div>
         <div className="flex items-end justify-between">
           <div>
-            <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-1">Submitted</div>
+            <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-1">{t('map.submitted')}</div>
             <div className="text-xs text-foreground">
-              {req.createdAt.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
+              {req.createdAt.toLocaleDateString(dateLocale(i18n.language), { day: 'numeric', month: 'short', year: 'numeric' })}
             </div>
           </div>
           <StatusDot status={req.status} />
@@ -242,17 +226,18 @@ function DetailPanel({ req, onClose }: { req: MapRequest; onClose: () => void })
   );
 }
 
-function Legend({ requests, statusFilter }: { requests: MapRequest[]; statusFilter: Status | 'all' }) {
+function Legend({ requests }: { requests: MapRequest[] }) {
+  const { t } = useTranslation();
   return (
     <div className="absolute top-4 right-4 bg-card border border-border rounded-sm p-3 shadow-md z-20 min-w-[160px]">
-      <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-2">Legend</div>
+      <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-2">{t('map.legend')}</div>
       {STATUS_ORDER.map((s) => {
         const count = requests.filter((r) => r.status === s).length;
-        const { pin, label } = STATUS_CONFIG[s];
+        const { pin } = STATUS_CONFIG[s];
         return (
           <div key={s} className="flex items-center gap-2 py-0.5">
             <span className={`w-3.5 h-3.5 rounded-full ${pin} border border-white shadow-sm flex-shrink-0`} />
-            <span className="text-xs text-foreground">{label}</span>
+            <span className="text-xs text-foreground">{statusLabel(s, t)}</span>
             <span className="text-xs text-muted-foreground ml-auto">{count}</span>
           </div>
         );
@@ -262,6 +247,7 @@ function Legend({ requests, statusFilter }: { requests: MapRequest[]; statusFilt
 }
 
 export function RequestMap({ user, onBack, onProfileClick }: RequestMapProps) {
+  const { t } = useTranslation();
   const [statusFilter, setStatusFilter] = useState<Status | 'all'>('all');
   const [selected, setSelected] = useState<MapRequest | null>(null);
   const [showLegend, setShowLegend] = useState(true);
@@ -292,12 +278,12 @@ export function RequestMap({ user, onBack, onProfileClick }: RequestMapProps) {
             className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-sm text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back
+            {t('common.back')}
           </button>
           <div className="w-px h-4 bg-border" />
-          <span className="font-display text-lg font-bold text-foreground">Request Map</span>
+          <span className="font-display text-lg font-bold text-foreground">{t('map.title')}</span>
           <span className="hidden sm:inline-block text-xs font-mono bg-muted px-2 py-0.5 rounded-sm text-muted-foreground">
-            {visible.length} of {ALL_REQUESTS.length} requests
+            {t('map.count', { visible: visible.length, total: ALL_REQUESTS.length })}
           </span>
         </div>
 
@@ -314,10 +300,10 @@ export function RequestMap({ user, onBack, onProfileClick }: RequestMapProps) {
                   : 'bg-muted text-muted-foreground hover:text-foreground'
               }`}
             >
-              All
+              {t('map.all')}
             </button>
             {ACTIVE_STATUSES.map((s) => {
-              const { label, pill, text } = STATUS_CONFIG[s];
+              const { pill, text } = STATUS_CONFIG[s];
               const active = statusFilter === s;
               return (
                 <button
@@ -330,7 +316,7 @@ export function RequestMap({ user, onBack, onProfileClick }: RequestMapProps) {
                       : 'bg-muted text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  {label}
+                  {statusLabel(s, t)}
                 </button>
               );
             })}
@@ -339,7 +325,7 @@ export function RequestMap({ user, onBack, onProfileClick }: RequestMapProps) {
             type="button"
             onClick={() => setShowLegend((v) => !v)}
             className={`border border-border rounded-sm p-1.5 transition-colors ${showLegend ? 'bg-muted' : 'hover:bg-muted/50'}`}
-            title="Toggle legend"
+            title={t('map.toggle_legend')}
           >
             <Layers className="w-3.5 h-3.5 text-muted-foreground" />
           </button>
@@ -374,7 +360,7 @@ export function RequestMap({ user, onBack, onProfileClick }: RequestMapProps) {
 
           {/* Watermark */}
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/70 border border-border rounded-sm px-3 py-1.5 text-xs font-mono text-muted-foreground backdrop-blur-sm pointer-events-none">
-            Google Maps — API key required
+            {t('map.api_watermark')}
           </div>
 
           {/* Pins */}
@@ -394,7 +380,7 @@ export function RequestMap({ user, onBack, onProfileClick }: RequestMapProps) {
 
           {/* Legend */}
           {showLegend && (
-            <Legend requests={ALL_REQUESTS} statusFilter={statusFilter} />
+            <Legend requests={ALL_REQUESTS} />
           )}
         </div>
       </div>

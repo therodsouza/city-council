@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 type GeoStatus = 'idle' | 'requesting' | 'error';
 
@@ -9,13 +10,14 @@ interface UseGeolocationReturn {
 }
 
 export function useGeolocation(): UseGeolocationReturn {
+  const { t } = useTranslation();
   const [status, setStatus] = useState<GeoStatus>('idle');
   const [error, setError] = useState<string | null>(null);
 
   function request(onCoords: (coords: GeolocationCoordinates) => void) {
     if (!navigator.geolocation) {
       setStatus('error');
-      setError('Geolocation is not supported by your browser.');
+      setError(t('geo.not_supported'));
       return;
     }
     setStatus('requesting');
@@ -29,8 +31,8 @@ export function useGeolocation(): UseGeolocationReturn {
         setStatus('error');
         setError(
           err.code === err.PERMISSION_DENIED
-            ? 'Location access was denied. Please allow it in your browser settings.'
-            : 'Unable to retrieve your location. Please enter the address manually.',
+            ? t('geo.denied')
+            : t('geo.unavailable'),
         );
       },
       { enableHighAccuracy: true, timeout: 10000 },

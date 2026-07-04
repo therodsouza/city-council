@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Wrench, CheckCircle2, Shield, Clock } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 
 const GoogleLogo = () => (
@@ -11,28 +12,17 @@ const GoogleLogo = () => (
   </svg>
 );
 
-const benefits = [
-  {
-    icon: CheckCircle2,
-    title: 'Track Your Requests',
-    description: 'View status updates and history of all your service requests',
-  },
-  {
-    icon: Clock,
-    title: 'Faster Submissions',
-    description: 'Your details are saved for quicker future requests',
-  },
-  {
-    icon: Shield,
-    title: 'Secure & Private',
-    description: 'Your information is encrypted and never shared with third parties',
-  },
-];
-
 export function Login() {
+  const { t } = useTranslation();
   const { login, error } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+
+  const benefits = [
+    { icon: CheckCircle2, title: t('login.benefit1_title'), description: t('login.benefit1_desc') },
+    { icon: Clock, title: t('login.benefit2_title'), description: t('login.benefit2_desc') },
+    { icon: Shield, title: t('login.benefit3_title'), description: t('login.benefit3_desc') },
+  ];
 
   const handleSignIn = async () => {
     setLocalError(null);
@@ -40,7 +30,7 @@ export function Login() {
     try {
       await login();
     } catch (e: any) {
-      setLocalError(e?.message ?? 'Failed to start sign-in');
+      setLocalError(e?.message ?? t('login.start_error'));
       setSubmitting(false);
     }
   };
@@ -56,8 +46,8 @@ export function Login() {
               <Wrench className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="text-xs font-mono uppercase tracking-widest opacity-50">City Council</div>
-              <div className="text-lg font-display font-semibold">Public Works & Infrastructure</div>
+              <div className="text-xs font-mono uppercase tracking-widest opacity-50">{t('brand.council')}</div>
+              <div className="text-lg font-display font-semibold">{t('brand.department')}</div>
             </div>
           </div>
         </div>
@@ -66,9 +56,9 @@ export function Login() {
       <main className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <h1 className="font-display text-4xl font-bold text-foreground mb-3">Welcome</h1>
+            <h1 className="font-display text-4xl font-bold text-foreground mb-3">{t('login.welcome')}</h1>
             <p className="text-muted-foreground">
-              Sign in to submit service requests and track your reports
+              {t('login.subtitle')}
             </p>
           </div>
 
@@ -80,7 +70,7 @@ export function Login() {
               className="w-full flex items-center justify-center gap-3 px-6 py-3.5 bg-white border-2 border-border rounded-sm text-foreground font-semibold hover:bg-muted/30 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <GoogleLogo />
-              {submitting ? 'Redirecting…' : 'Sign in with Google'}
+              {submitting ? t('login.redirecting') : t('login.sign_in_google')}
             </button>
 
             {message && (
@@ -88,10 +78,10 @@ export function Login() {
             )}
 
             <p className="text-xs text-muted-foreground text-center mt-4">
-              By signing in, you agree to our{' '}
-              <span className="text-primary underline cursor-pointer">Terms of Service</span>{' '}
-              and{' '}
-              <span className="text-primary underline cursor-pointer">Privacy Policy</span>
+              {t('login.agree_prefix')}{' '}
+              <span className="text-primary underline cursor-pointer">{t('footer.terms')}</span>{' '}
+              {t('common.and')}{' '}
+              <span className="text-primary underline cursor-pointer">{t('footer.privacy')}</span>
             </p>
 
           </div>
@@ -114,11 +104,11 @@ export function Login() {
 
       <footer className="border-t border-border py-6">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-          <span className="font-mono">© {new Date().getFullYear()} City Council. All rights reserved.</span>
+          <span className="font-mono">{t('footer.rights', { year: new Date().getFullYear() })}</span>
           <div className="flex gap-6">
-            <a href="#" className="hover:text-foreground transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-foreground transition-colors">Accessibility</a>
+            <a href="#" className="hover:text-foreground transition-colors">{t('footer.terms')}</a>
+            <a href="#" className="hover:text-foreground transition-colors">{t('footer.privacy')}</a>
+            <a href="#" className="hover:text-foreground transition-colors">{t('footer.accessibility')}</a>
           </div>
         </div>
       </footer>

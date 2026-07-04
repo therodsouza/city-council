@@ -1,23 +1,8 @@
 import React from 'react';
 import { ArrowLeft, ChevronRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { FormData, Step } from '../types/form';
-
-const CATEGORY_LABELS: Record<string, string> = {
-  pothole: 'Pothole / Road Damage',
-  graffiti: 'Graffiti / Vandalism',
-  broken: 'Broken Equipment',
-  flooding: 'Flooding / Water Damage',
-  lighting: 'Street Light Outage',
-  trees: 'Fallen Tree / Branch',
-  dumping: 'Illegal Dumping / Litter',
-  other: 'Other Infrastructure',
-};
-
-const SEVERITY_LABELS: Record<string, string> = {
-  low: 'Low Priority',
-  medium: 'Medium Priority',
-  high: 'High Priority',
-};
+import { categoryLabel, severityPriorityLabel, siteTypeLabel } from '../i18n/labels';
 
 function ReviewSection({
   title,
@@ -28,6 +13,7 @@ function ReviewSection({
   onEdit: () => void;
   children: React.ReactNode;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="border border-border rounded-sm overflow-hidden">
       <div className="flex items-center justify-between px-4 py-2.5 bg-muted/30">
@@ -39,7 +25,7 @@ function ReviewSection({
           onClick={onEdit}
           className="text-xs font-semibold text-primary hover:underline"
         >
-          Edit
+          {t('stepReview.edit')}
         </button>
       </div>
       <div className="divide-y divide-border">{children}</div>
@@ -68,38 +54,39 @@ interface Props {
 }
 
 export default function StepReview({ form, setVal, photoUrl, onBack, onSubmit, onEdit, submitError }: Props) {
+  const { t } = useTranslation();
   return (
     <div>
       <div className="px-8 py-6 border-b border-border">
-        <h2 className="text-xl font-display font-bold text-foreground">Review & Submit</h2>
+        <h2 className="text-xl font-display font-bold text-foreground">{t('stepReview.title')}</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Please review your information carefully before submitting.
+          {t('stepReview.subtitle')}
         </p>
       </div>
 
       <div className="px-8 py-6 space-y-4">
-        <ReviewSection title="Location" onEdit={() => onEdit(1)}>
-          <ReviewRow label="Address" value={form.address} />
-          <ReviewRow label="Suburb" value={form.suburb} />
-          <ReviewRow label="Postcode" value={form.postcode} />
-          <ReviewRow label="Site Type" value={form.siteType} />
-          <ReviewRow label="Notes" value={form.locationNote} />
+        <ReviewSection title={t('stepReview.section_location')} onEdit={() => onEdit(1)}>
+          <ReviewRow label={t('stepReview.row_address')} value={form.address} />
+          <ReviewRow label={t('stepReview.row_suburb')} value={form.suburb} />
+          <ReviewRow label={t('stepReview.row_postcode')} value={form.postcode} />
+          <ReviewRow label={t('stepReview.row_site_type')} value={siteTypeLabel(form.siteType, t)} />
+          <ReviewRow label={t('stepReview.row_notes')} value={form.locationNote} />
         </ReviewSection>
 
-        <ReviewSection title="Issue Details" onEdit={() => onEdit(2)}>
-          <ReviewRow label="Category" value={CATEGORY_LABELS[form.category] ?? form.category} />
-          <ReviewRow label="Severity" value={SEVERITY_LABELS[form.severity] ?? form.severity} />
-          <ReviewRow label="Description" value={form.description} />
-          {photoUrl && <ReviewRow label="Photo" value="Photo attached" />}
+        <ReviewSection title={t('stepReview.section_issue')} onEdit={() => onEdit(2)}>
+          <ReviewRow label={t('stepReview.row_category')} value={categoryLabel(form.category, t)} />
+          <ReviewRow label={t('stepReview.row_severity')} value={severityPriorityLabel(form.severity, t)} />
+          <ReviewRow label={t('stepReview.row_description')} value={form.description} />
+          {photoUrl && <ReviewRow label={t('stepReview.row_photo')} value={t('stepReview.photo_attached')} />}
         </ReviewSection>
 
-        <ReviewSection title="Your Details" onEdit={() => onEdit(3)}>
-          <ReviewRow label="Name" value={form.name} />
-          <ReviewRow label="Email" value={form.email} />
-          <ReviewRow label="Phone" value={form.phone} />
+        <ReviewSection title={t('stepReview.section_contact')} onEdit={() => onEdit(3)}>
+          <ReviewRow label={t('stepReview.row_name')} value={form.name} />
+          <ReviewRow label={t('stepReview.row_email')} value={form.email} />
+          <ReviewRow label={t('stepReview.row_phone')} value={form.phone} />
           <ReviewRow
-            label="Updates"
-            value={form.receiveUpdates ? 'Email notifications enabled' : 'No notifications'}
+            label={t('stepReview.row_updates')}
+            value={form.receiveUpdates ? t('stepReview.updates_on') : t('stepReview.updates_off')}
           />
         </ReviewSection>
 
@@ -111,13 +98,13 @@ export default function StepReview({ form, setVal, photoUrl, onBack, onSubmit, o
             className="mt-0.5 w-4 h-4 accent-primary"
           />
           <span className="text-sm text-foreground">
-            I confirm the information provided is accurate and agree to the council's{' '}
+            {t('stepReview.agree_prefix')}{' '}
             <a href="#" className="text-primary hover:underline">
-              Terms of Service
+              {t('footer.terms')}
             </a>{' '}
-            and{' '}
+            {t('common.and')}{' '}
             <a href="#" className="text-primary hover:underline">
-              Privacy Policy
+              {t('footer.privacy')}
             </a>
             .
           </span>
@@ -136,16 +123,16 @@ export default function StepReview({ form, setVal, photoUrl, onBack, onSubmit, o
           onClick={onBack}
           className="flex items-center gap-2 px-4 py-2 border border-border bg-white text-foreground text-sm font-semibold rounded-sm hover:border-primary/40 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Back
+          <ArrowLeft className="w-4 h-4" /> {t('common.back')}
         </button>
-        <span className="text-xs font-mono text-muted-foreground">4 of 4</span>
+        <span className="text-xs font-mono text-muted-foreground">{t('common.step_counter', { current: 4, total: 4 })}</span>
         <button
           type="button"
           disabled={!form.agreeTerms}
           onClick={onSubmit}
           className="flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground text-sm font-semibold rounded-sm hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
-          Submit Request <ChevronRight className="w-4 h-4" />
+          {t('stepReview.submit')} <ChevronRight className="w-4 h-4" />
         </button>
       </div>
     </div>
