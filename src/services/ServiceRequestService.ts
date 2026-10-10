@@ -113,21 +113,49 @@ export async function submitServiceRequest(
   return data.referenceNumber;
 }
 
+interface ServiceRequestPage {
+  items: ServiceRequestListItem[];
+  nextToken?: string | null;
+}
+
+const LIST_PAGE_SIZE = 100;
+const MAX_LIST_PAGES = 50;
+
+/**
+ * Loads every request the caller may see. The API returns pages
+ * ({ items, nextToken }); older deployments returned a bare array, which is
+ * still accepted so the frontend can be deployed before or after the API.
+ */
 export async function getServiceRequests(): Promise<ServiceRequestListItem[]> {
   if (!API_URL) {
     return [];
   }
 
   const idToken = await authenticationService.getIdToken();
+  const requests: ServiceRequestListItem[] = [];
+  let nextToken: string | null = null;
 
-  const response = await fetch(`${API_URL}/service-requests`, {
-    headers: idToken ? { Authorization: `Bearer ${idToken}` } : {},
-  });
+  for (let page = 0; page < MAX_LIST_PAGES; page++) {
+    const query: string = `limit=${LIST_PAGE_SIZE}` + (nextToken ? `&nextToken=${encodeURIComponent(nextToken)}` : '');
+    const response = await fetch(`${API_URL}/service-requests?${query}`, {
+      headers: idToken ? { Authorization: `Bearer ${idToken}` } : {},
+    });
 
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({})) as { message?: string };
-    throw new Error(err.message ?? `Failed to load requests: ${response.status} ${response.statusText}`);
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({})) as { message?: string };
+      throw new Error(err.message ?? `Failed to load requests: ${response.status} ${response.statusText}`);
+    }
+
+    const body = await response.json() as ServiceRequestListItem[] | ServiceRequestPage;
+    if (Array.isArray(body)) {
+      return body;
+    }
+    requests.push(...(body.items ?? []));
+    nextToken = body.nextToken ?? null;
+    if (!nextToken) {
+      break;
+    }
   }
 
-  return response.json() as Promise<ServiceRequestListItem[]>;
+  return requests;
 }
