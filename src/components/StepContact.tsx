@@ -6,16 +6,18 @@ import { FieldLabel, TextInput } from './FormFields';
 interface Props {
   form: FormData;
   setVal: (key: keyof FormData, value: string | boolean) => void;
+  /** Guests have no account: email is optional and email updates are not offered. */
+  isGuest?: boolean;
   onNext: () => void;
   onBack: () => void;
 }
 
-export default function StepContact({ form, setVal, onNext, onBack }: Props) {
+export default function StepContact({ form, setVal, isGuest = false, onNext, onBack }: Props) {
   const { t } = useTranslation();
+  const emailLooksValid = form.email.includes('@') && form.email.includes('.');
   const canProceed = !!(
     form.name.trim() &&
-    form.email.includes('@') &&
-    form.email.includes('.')
+    (emailLooksValid || (isGuest && !form.email.trim()))
   );
 
   return (
@@ -31,7 +33,7 @@ export default function StepContact({ form, setVal, onNext, onBack }: Props) {
         <div className="flex items-start gap-3 p-4 border border-border bg-secondary/40 rounded-sm">
           <Shield className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
           <p className="text-sm text-muted-foreground">
-            {t('stepContact.privacy')}
+            {isGuest ? t('stepContact.privacy_guest') : t('stepContact.privacy')}
           </p>
         </div>
 
@@ -43,12 +45,18 @@ export default function StepContact({ form, setVal, onNext, onBack }: Props) {
             onChange={e => setVal('name', e.target.value)}
             placeholder={t('stepContact.name_placeholder')}
             autoComplete="name"
+            maxLength={200}
           />
         </div>
 
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <FieldLabel htmlFor="email" required>{t('stepContact.email')}</FieldLabel>
+            <FieldLabel htmlFor="email" required={!isGuest}>
+              {t('stepContact.email')}
+              {isGuest && (
+                <>{' '}<span className="text-xs font-normal text-muted-foreground">{t('stepContact.optional')}</span></>
+              )}
+            </FieldLabel>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <TextInput
@@ -58,6 +66,7 @@ export default function StepContact({ form, setVal, onNext, onBack }: Props) {
                 onChange={e => setVal('email', e.target.value)}
                 placeholder={t('stepContact.email_placeholder')}
                 autoComplete="email"
+                maxLength={254}
                 className="pl-9"
               />
             </div>
@@ -76,28 +85,31 @@ export default function StepContact({ form, setVal, onNext, onBack }: Props) {
                 onChange={e => setVal('phone', e.target.value)}
                 placeholder={t('stepContact.phone_placeholder')}
                 autoComplete="tel"
+                maxLength={30}
                 className="pl-9"
               />
             </div>
           </div>
         </div>
 
-        <label className="flex items-start gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={form.receiveUpdates}
-            onChange={e => setVal('receiveUpdates', e.target.checked)}
-            className="mt-0.5 w-4 h-4 accent-primary"
-          />
-          <div>
-            <span className="text-sm font-semibold text-foreground">
-              {t('stepContact.updates_label')}
-            </span>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {t('stepContact.updates_sub')}
-            </p>
-          </div>
-        </label>
+        {(!isGuest || form.email.trim()) && (
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.receiveUpdates}
+              onChange={e => setVal('receiveUpdates', e.target.checked)}
+              className="mt-0.5 w-4 h-4 accent-primary"
+            />
+            <div>
+              <span className="text-sm font-semibold text-foreground">
+                {t('stepContact.updates_label')}
+              </span>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {t('stepContact.updates_sub')}
+              </p>
+            </div>
+          </label>
+        )}
       </div>
 
       <div className="px-8 py-4 border-t border-border flex items-center justify-between">

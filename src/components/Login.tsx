@@ -12,7 +12,12 @@ const GoogleLogo = () => (
   </svg>
 );
 
-export function Login() {
+interface Props {
+  /** When provided, shows an option to submit a request without signing in. */
+  onContinueAsGuest?: () => void;
+}
+
+export function Login({ onContinueAsGuest }: Props) {
   const { t } = useTranslation();
   const { login, error } = useAuth();
   const [submitting, setSubmitting] = useState(false);
@@ -75,6 +80,19 @@ export function Login() {
 
             {message && (
               <p className="text-xs text-red-600 text-center mt-3" role="alert">{message}</p>
+            )}
+
+            {onContinueAsGuest && (
+              <div className="mt-4 pt-4 border-t border-border text-center">
+                <button
+                  type="button"
+                  onClick={onContinueAsGuest}
+                  className="text-sm font-semibold text-primary hover:underline"
+                >
+                  {t('login.continue_guest')}
+                </button>
+                <p className="text-xs text-muted-foreground mt-1">{t('login.continue_guest_desc')}</p>
+              </div>
             )}
 
             <p className="text-xs text-muted-foreground text-center mt-4">

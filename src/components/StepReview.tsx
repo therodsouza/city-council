@@ -52,9 +52,13 @@ interface Props {
   onEdit: (s: Step) => void;
   submitError?: string | null;
   isSubmitting?: boolean;
+  /** Guests: updates are not offered and the phone verification card is shown before the terms. */
+  isGuest?: boolean;
+  guestVerification?: React.ReactNode;
+  submitBlocked?: boolean;
 }
 
-export default function StepReview({ form, setVal, photoUrl, onBack, onSubmit, onEdit, submitError, isSubmitting }: Props) {
+export default function StepReview({ form, setVal, photoUrl, onBack, onSubmit, onEdit, submitError, isSubmitting, isGuest = false, guestVerification, submitBlocked = false }: Props) {
   const { t } = useTranslation();
   return (
     <div>
@@ -85,11 +89,15 @@ export default function StepReview({ form, setVal, photoUrl, onBack, onSubmit, o
           <ReviewRow label={t('stepReview.row_name')} value={form.name} />
           <ReviewRow label={t('stepReview.row_email')} value={form.email} />
           <ReviewRow label={t('stepReview.row_phone')} value={form.phone} />
-          <ReviewRow
-            label={t('stepReview.row_updates')}
-            value={form.receiveUpdates ? t('stepReview.updates_on') : t('stepReview.updates_off')}
-          />
+          {(!isGuest || form.email.trim()) && (
+            <ReviewRow
+              label={t('stepReview.row_updates')}
+              value={form.receiveUpdates ? t('stepReview.updates_on') : t('stepReview.updates_off')}
+            />
+          )}
         </ReviewSection>
+
+        {guestVerification}
 
         <label className="flex items-start gap-3 cursor-pointer pt-2">
           <input
@@ -129,7 +137,7 @@ export default function StepReview({ form, setVal, photoUrl, onBack, onSubmit, o
         <span className="text-xs font-mono text-muted-foreground">{t('common.step_counter', { current: 4, total: 4 })}</span>
         <button
           type="button"
-          disabled={!form.agreeTerms || isSubmitting}
+          disabled={!form.agreeTerms || isSubmitting || submitBlocked}
           onClick={onSubmit}
           className="flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground text-sm font-semibold rounded-sm hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >

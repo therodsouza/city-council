@@ -11,10 +11,12 @@ interface Props {
   form: FormData;
   setVal: (key: keyof FormData, value: string | boolean) => void;
   setCoords: (lat: number, lng: number) => void;
+  /** Reverse geocoding needs an account; guests type the address instead. */
+  canUseMyLocation?: boolean;
   onNext: () => void;
 }
 
-export default function StepLocation({ form, setVal, setCoords, onNext }: Props) {
+export default function StepLocation({ form, setVal, setCoords, canUseMyLocation = true, onNext }: Props) {
   const { t } = useTranslation();
   const canProceed = !!(form.address.trim() && form.suburb.trim() && form.siteType);
   const geo = useGeolocation();
@@ -50,24 +52,26 @@ export default function StepLocation({ form, setVal, setCoords, onNext }: Props)
       </div>
 
       <div className="px-8 py-6 space-y-6">
-        <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            disabled={locating}
-            onClick={handleUseMyLocation}
-            className="flex items-center gap-2 w-fit px-4 py-2 border border-border bg-white text-foreground text-sm font-semibold rounded-sm hover:border-primary/40 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {locating ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <LocateFixed className="w-4 h-4" />
+        {canUseMyLocation && (
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              disabled={locating}
+              onClick={handleUseMyLocation}
+              className="flex items-center gap-2 w-fit px-4 py-2 border border-border bg-white text-foreground text-sm font-semibold rounded-sm hover:border-primary/40 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {locating ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <LocateFixed className="w-4 h-4" />
+              )}
+              {locating ? t('stepLocation.detecting') : t('stepLocation.use_my_location')}
+            </button>
+            {(geo.error || geocodeError) && (
+              <p className="text-xs text-red-600">{geo.error ?? geocodeError}</p>
             )}
-            {locating ? t('stepLocation.detecting') : t('stepLocation.use_my_location')}
-          </button>
-          {(geo.error || geocodeError) && (
-            <p className="text-xs text-red-600">{geo.error ?? geocodeError}</p>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="grid sm:grid-cols-3 gap-4">
           <div className="sm:col-span-2">
@@ -78,6 +82,7 @@ export default function StepLocation({ form, setVal, setCoords, onNext }: Props)
               onChange={e => setVal('address', e.target.value)}
               placeholder={t('stepLocation.address_placeholder')}
               autoComplete="street-address"
+              maxLength={300}
             />
           </div>
           <div>
@@ -88,6 +93,7 @@ export default function StepLocation({ form, setVal, setCoords, onNext }: Props)
               onChange={e => setVal('postcode', e.target.value)}
               placeholder={t('stepLocation.postcode_placeholder')}
               autoComplete="postal-code"
+              maxLength={20}
             />
           </div>
         </div>
@@ -100,6 +106,7 @@ export default function StepLocation({ form, setVal, setCoords, onNext }: Props)
             onChange={e => setVal('suburb', e.target.value)}
             placeholder={t('stepLocation.suburb_placeholder')}
             autoComplete="address-level2"
+            maxLength={100}
           />
         </div>
 
@@ -116,6 +123,7 @@ export default function StepLocation({ form, setVal, setCoords, onNext }: Props)
             onChange={e => setVal('locationNote', e.target.value)}
             placeholder={t('stepLocation.notes_placeholder')}
             rows={3}
+            maxLength={1000}
           />
         </div>
 

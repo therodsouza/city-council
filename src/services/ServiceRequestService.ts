@@ -1,5 +1,6 @@
 import { FormData as AppFormData } from '../types/form';
 import { authenticationService } from './AuthenticationService';
+import { toApiError } from './ApiError';
 
 export interface ServiceRequestPayload {
   submittedAt: string;
@@ -19,13 +20,17 @@ export interface ServiceRequestPayload {
   };
   contact: {
     name: string;
-    email: string;
+    email?: string;
     phone: string;
     receiveUpdates: boolean;
   };
 }
 
-export function buildServiceRequestPayload(form: AppFormData): ServiceRequestPayload {
+export function buildServiceRequestPayload(
+  form: AppFormData,
+  { anonymous = false }: { anonymous?: boolean } = {},
+): ServiceRequestPayload {
+  const email = form.email.trim();
   return {
     submittedAt: new Date().toISOString(),
     location: {
@@ -45,9 +50,10 @@ export function buildServiceRequestPayload(form: AppFormData): ServiceRequestPay
     },
     contact: {
       name: form.name,
-      email: form.email,
+      // Anonymous requests treat email as optional; omit it rather than send an empty string.
+      ...(anonymous && !email ? {} : { email: form.email }),
       phone: form.phone,
-      receiveUpdates: form.receiveUpdates,
+      receiveUpdates: form.receiveUpdates && (!anonymous || !!email),
     },
   };
 }
@@ -77,6 +83,19 @@ export interface ServiceRequestListItem {
 
 const API_URL = import.meta.env.VITE_API_URL as string | undefined;
 
+function buildSubmitBody(payload: ServiceRequestPayload, photoFile?: File | null): FormData {
+  const body = new FormData();
+  body.append(
+    'data',
+    new Blob([JSON.stringify(payload)], { type: 'application/json' }),
+    'data.json',
+  );
+  if (photoFile) {
+    body.append('photo', photoFile, photoFile.name);
+  }
+  return body;
+}
+
 export async function submitServiceRequest(
   payload: ServiceRequestPayload,
   photoFile?: File | null,
@@ -88,26 +107,39 @@ export async function submitServiceRequest(
 
   const idToken = await authenticationService.getIdToken();
 
-  const body = new FormData();
-  body.append(
-    'data',
-    new Blob([JSON.stringify(payload)], { type: 'application/json' }),
-    'data.json',
-  );
-  if (photoFile) {
-    body.append('photo', photoFile, photoFile.name);
-  }
-
   const response = await fetch(`${API_URL}/service-requests`, {
     method: 'POST',
     headers: idToken ? { Authorization: `Bearer ${idToken}` } : {},
-    body,
+    body: buildSubmitBody(payload, photoFile),
   });
 
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({})) as { message?: string };
-    throw new Error(err.message ?? `Submission failed: ${response.status} ${response.statusText}`);
+  if (!response.ok) throw await toApiError(response, 'Submission failed');
+
+  const data = await response.json() as { referenceNumber: string };
+  return data.referenceNumber;
+}
+
+/**
+ * Submits without an account, using the token from a confirmed phone verification.
+ * Public endpoint: no Authorization header. Throws ApiError on any non-2xx response.
+ */
+export async function submitAnonymousServiceRequest(
+  payload: ServiceRequestPayload,
+  photoFile: File | null | undefined,
+  verificationToken: string,
+): Promise<string> {
+  if (!API_URL) {
+    console.log('[ServiceRequest] No VITE_API_URL configured — anonymous payload:', payload);
+    return `SR-DEV-${String(Math.floor(Math.random() * 90000) + 10000)}`;
   }
+
+  const response = await fetch(`${API_URL}/anonymous/service-requests`, {
+    method: 'POST',
+    headers: { 'X-Verification-Token': verificationToken },
+    body: buildSubmitBody(payload, photoFile),
+  });
+
+  if (!response.ok) throw await toApiError(response, 'Submission failed');
 
   const data = await response.json() as { referenceNumber: string };
   return data.referenceNumber;

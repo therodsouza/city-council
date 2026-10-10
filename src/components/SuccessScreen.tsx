@@ -1,4 +1,5 @@
-import { CheckCircle2 } from 'lucide-react';
+import { useState } from 'react';
+import { CheckCircle2, Copy, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { FormData } from '../types/form';
 import { categoryLabel, severityPriorityLabel, siteTypeLabel } from '../i18n/labels';
@@ -12,12 +13,26 @@ const SEVERITY_DOTS: Record<string, string> = {
 interface Props {
   form: FormData;
   refNum: string;
+  /** Guests cannot look their request up later, so the reference number is their only receipt. */
+  isGuest?: boolean;
   onReset: () => void;
-  onTrackClick: () => void;
+  onTrackClick?: () => void;
 }
 
-export default function SuccessScreen({ form, refNum, onReset, onTrackClick }: Props) {
+export default function SuccessScreen({ form, refNum, isGuest = false, onReset, onTrackClick }: Props) {
   const { t } = useTranslation();
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(refNum);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard unavailable (insecure context or denied): the number is still on screen.
+    }
+  };
+
   const timeline = [
     {
       n: 1,
@@ -32,7 +47,7 @@ export default function SuccessScreen({ form, refNum, onReset, onTrackClick }: P
     {
       n: 3,
       title: t('success.timeline3_title'),
-      desc: form.receiveUpdates
+      desc: form.receiveUpdates && !isGuest
         ? t('success.timeline3_desc_updates', { email: form.email })
         : t('success.timeline3_desc_no_updates'),
     },
@@ -56,7 +71,17 @@ export default function SuccessScreen({ form, refNum, onReset, onTrackClick }: P
             {t('success.reference_number')}
           </div>
           <div className="text-3xl font-mono font-bold text-primary tracking-wider">{refNum}</div>
-          <p className="text-xs text-muted-foreground mt-1">{t('success.save_number')}</p>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="inline-flex items-center gap-1.5 mt-3 px-3 py-1.5 border border-border rounded-sm text-xs font-semibold text-foreground hover:bg-muted/60 transition-colors"
+          >
+            {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? t('success.copied') : t('success.copy')}
+          </button>
+          <p className="text-xs text-muted-foreground mt-2">
+            {isGuest ? t('success.save_number_guest') : t('success.save_number')}
+          </p>
         </div>
         <div className="grid grid-cols-2 gap-4 border-t border-border pt-4">
           <div>
@@ -118,13 +143,15 @@ export default function SuccessScreen({ form, refNum, onReset, onTrackClick }: P
         >
           {t('success.submit_another')}
         </button>
-        <button
-          type="button"
-          onClick={onTrackClick}
-          className="px-6 py-2.5 border border-border rounded-sm text-sm font-medium text-foreground hover:bg-muted/60 transition-colors"
-        >
-          {t('success.track')}
-        </button>
+        {onTrackClick && (
+          <button
+            type="button"
+            onClick={onTrackClick}
+            className="px-6 py-2.5 border border-border rounded-sm text-sm font-medium text-foreground hover:bg-muted/60 transition-colors"
+          >
+            {t('success.track')}
+          </button>
+        )}
       </div>
     </div>
   );

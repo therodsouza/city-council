@@ -32,7 +32,8 @@
     "request_map": "Mapa de Solicitações",
     "request_map_title": "Mapa de Solicitações (Admin)",
     "view_profile_title": "Ver Perfil",
-    "view_profile_aria": "Ver seu perfil"
+    "view_profile_aria": "Ver seu perfil",
+    "sign_in": "Entrar"
   },
   "categories": {
     "pothole": "Buraco / Dano na Via",
@@ -95,7 +96,9 @@
     "benefit2_title": "Envios Mais Rápidos",
     "benefit2_desc": "Seus dados são salvos para agilizar solicitações futuras",
     "benefit3_title": "Seguro e Privado",
-    "benefit3_desc": "Suas informações são criptografadas e nunca compartilhadas com terceiros"
+    "benefit3_desc": "Suas informações são criptografadas e nunca compartilhadas com terceiros",
+    "continue_guest": "Continuar sem conta",
+    "continue_guest_desc": "Registre um problema agora e confirme seu celular por SMS."
   },
   "authCallback": {
     "google_returned": "O Google retornou: {{error}}",
@@ -215,7 +218,9 @@
     "char_count": "{{count}} caracteres",
     "category": "Categoria",
     "category_placeholder": "Selecione uma categoria…",
-    "severity": "Gravidade"
+    "severity": "Gravidade",
+    "photo_type_error": "Não foi possível usar esta imagem. Escolha uma foto JPEG, PNG ou WebP.",
+    "photo_size_error": "Esta foto é grande demais (máximo de 5 MB). Escolha uma menor."
   },
   "stepContact": {
     "title": "Seus Dados",
@@ -229,7 +234,8 @@
     "optional": "(opcional)",
     "phone_placeholder": "ex.: 0412 345 678",
     "updates_label": "Receber atualizações de status por e-mail",
-    "updates_sub": "Avisaremos você quando sua solicitação for avaliada e resolvida."
+    "updates_sub": "Avisaremos você quando sua solicitação for avaliada e resolvida.",
+    "privacy_guest": "Seus dados são coletados apenas para processar esta solicitação. O celular verificado é armazenado com a solicitação e visível somente para os administradores da prefeitura."
   },
   "stepReview": {
     "title": "Revisar e Enviar",
@@ -273,7 +279,10 @@
     "timeline3_desc_updates": "Enviaremos um e-mail para {{email}} quando o problema for resolvido.",
     "timeline3_desc_no_updates": "O problema será resolvido e o local restaurado a condições seguras.",
     "submit_another": "Enviar Outra Solicitação",
-    "track": "Acompanhar Suas Solicitações"
+    "track": "Acompanhar Suas Solicitações",
+    "copy": "Copiar número",
+    "copied": "Copiado",
+    "save_number_guest": "Guarde este número. Ele é seu único comprovante: solicitações enviadas sem conta não podem ser consultadas depois."
   },
   "track": {
     "back": "Voltar para Enviar uma Solicitação",
@@ -303,5 +312,33 @@
     "location": "Localização",
     "submitted": "Enviada",
     "pin_aria": "{{category}} em {{address}}"
+  },
+  "anon": {
+    "verify_title": "Verifique seu celular",
+    "verify_desc": "Enviaremos um código de 6 dígitos por SMS para confirmar que esta solicitação vem de uma pessoa real. Apenas celulares brasileiros.",
+    "phone_label": "Número de celular",
+    "phone_placeholder": "(11) 91234-5678",
+    "send_code": "Enviar código",
+    "sending": "Enviando…",
+    "code_label": "Código de verificação",
+    "code_hint": "Digite o código de 6 dígitos enviado para {{phone}}.",
+    "dev_code_hint": "Modo de desenvolvimento: use o código {{code}}.",
+    "verify": "Verificar",
+    "verifying": "Verificando…",
+    "resend": "Enviar novo código ou trocar o número",
+    "verified_title": "Celular verificado",
+    "change_number": "Alterar",
+    "err_phone_invalid": "Informe um celular brasileiro com DDD, por exemplo (11) 91234-5678.",
+    "err_captcha": "A verificação de segurança falhou. Tente novamente.",
+    "err_captcha_unconfigured": "A verificação de segurança não está configurada. Tente novamente mais tarde.",
+    "err_too_many": "Muitas tentativas. Tente novamente mais tarde.",
+    "err_sms_failed": "Não foi possível enviar o código. Tente novamente em instantes.",
+    "err_code_invalid": "Código inválido ou expirado. Confira os dígitos ou peça um novo código.",
+    "err_generic": "Algo deu errado. Tente novamente.",
+    "err_verification_expired": "A verificação do celular expirou. Verifique seu número novamente.",
+    "err_request_invalid": "Não foi possível aceitar a solicitação. Revise seus dados e tente novamente.",
+    "err_photo_invalid": "Não foi possível aceitar a foto. Use uma imagem JPEG, PNG ou WebP.",
+    "err_photo_too_large": "A foto é grande demais (máximo de 5 MB). Remova-a ou escolha uma menor.",
+    "err_daily_limit": "Este número atingiu o limite diário de solicitações. Tente novamente amanhã."
   }
 }

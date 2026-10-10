@@ -5,13 +5,15 @@ import { dateLocale } from '../i18n/labels';
 
 interface Props {
   user: User | null;
-  onProfileClick: () => void;
+  onProfileClick?: () => void;
   onTrackClick?: () => void;
   onMapClick?: () => void;
+  /** Shown when there is no signed-in user, so a guest can switch to signing in. */
+  onSignInClick?: () => void;
   adminLabel?: boolean;
 }
 
-export function SiteHeader({ user, onProfileClick, onTrackClick, onMapClick, adminLabel }: Props) {
+export function SiteHeader({ user, onProfileClick, onTrackClick, onMapClick, onSignInClick, adminLabel }: Props) {
   const { t, i18n } = useTranslation();
   const date = new Date().toLocaleDateString(dateLocale(i18n.language), {
     day: 'numeric',
@@ -60,6 +62,15 @@ export function SiteHeader({ user, onProfileClick, onTrackClick, onMapClick, adm
             >
               <Map className="w-4 h-4" />
               {t('header.request_map')}
+            </button>
+          )}
+          {!user && onSignInClick && (
+            <button
+              type="button"
+              onClick={onSignInClick}
+              className="inline-flex px-3 py-2.5 rounded-sm bg-primary-foreground/10 hover:bg-primary-foreground/20 border border-primary-foreground/20 text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors"
+            >
+              {t('header.sign_in')}
             </button>
           )}
           {user && (

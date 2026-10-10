@@ -32,7 +32,8 @@
     "request_map": "Request Map",
     "request_map_title": "Request Map (Admin)",
     "view_profile_title": "View Profile",
-    "view_profile_aria": "View your profile"
+    "view_profile_aria": "View your profile",
+    "sign_in": "Sign in"
   },
   "categories": {
     "pothole": "Pothole / Road Damage",
@@ -95,7 +96,9 @@
     "benefit2_title": "Faster Submissions",
     "benefit2_desc": "Your details are saved for quicker future requests",
     "benefit3_title": "Secure & Private",
-    "benefit3_desc": "Your information is encrypted and never shared with third parties"
+    "benefit3_desc": "Your information is encrypted and never shared with third parties",
+    "continue_guest": "Continue without an account",
+    "continue_guest_desc": "Report an issue now and confirm your phone number by SMS instead."
   },
   "authCallback": {
     "google_returned": "Google returned: {{error}}",
@@ -215,7 +218,9 @@
     "char_count": "{{count}} chars",
     "category": "Category",
     "category_placeholder": "Select a category…",
-    "severity": "Severity"
+    "severity": "Severity",
+    "photo_type_error": "This image could not be used. Please choose a JPEG, PNG or WebP photo.",
+    "photo_size_error": "This photo is too large (maximum 5 MB). Please choose a smaller one."
   },
   "stepContact": {
     "title": "Your Details",
@@ -229,7 +234,8 @@
     "optional": "(optional)",
     "phone_placeholder": "e.g. 0412 345 678",
     "updates_label": "Receive status updates by email",
-    "updates_sub": "We will notify you when your request is assessed and resolved."
+    "updates_sub": "We will notify you when your request is assessed and resolved.",
+    "privacy_guest": "Your details are collected solely to process this service request. The mobile number you verify is stored with the request and is visible to council administrators only."
   },
   "stepReview": {
     "title": "Review & Submit",
@@ -273,7 +279,10 @@
     "timeline3_desc_updates": "We will email {{email}} when the issue has been resolved.",
     "timeline3_desc_no_updates": "The issue will be resolved and the site restored to safe condition.",
     "submit_another": "Submit Another Request",
-    "track": "Track Your Requests"
+    "track": "Track Your Requests",
+    "copy": "Copy number",
+    "copied": "Copied",
+    "save_number_guest": "Keep this number. It is your only receipt: requests sent without an account cannot be looked up later."
   },
   "track": {
     "back": "Back to Submit a Request",
@@ -303,5 +312,33 @@
     "location": "Location",
     "submitted": "Submitted",
     "pin_aria": "{{category}} at {{address}}"
+  },
+  "anon": {
+    "verify_title": "Verify your mobile number",
+    "verify_desc": "We will text you a 6-digit code to confirm this request comes from a real person. Brazilian mobile numbers only.",
+    "phone_label": "Mobile number",
+    "phone_placeholder": "(11) 91234-5678",
+    "send_code": "Send code",
+    "sending": "Sending…",
+    "code_label": "Verification code",
+    "code_hint": "Enter the 6-digit code we sent to {{phone}}.",
+    "dev_code_hint": "Development mode: use code {{code}}.",
+    "verify": "Verify",
+    "verifying": "Verifying…",
+    "resend": "Send a new code or change number",
+    "verified_title": "Mobile number verified",
+    "change_number": "Change",
+    "err_phone_invalid": "Enter a Brazilian mobile number with area code, e.g. (11) 91234-5678.",
+    "err_captcha": "The security check failed. Please try again.",
+    "err_captcha_unconfigured": "The security check is not configured. Please try again later.",
+    "err_too_many": "Too many attempts. Please try again later.",
+    "err_sms_failed": "We could not send the code. Please try again in a moment.",
+    "err_code_invalid": "That code is invalid or has expired. Check the digits or request a new code.",
+    "err_generic": "Something went wrong. Please try again.",
+    "err_verification_expired": "Phone verification has expired. Please verify your number again.",
+    "err_request_invalid": "The request could not be accepted. Please review your details and try again.",
+    "err_photo_invalid": "The photo could not be accepted. Please use a JPEG, PNG or WebP image.",
+    "err_photo_too_large": "The photo is too large (maximum 5 MB). Please remove it or choose a smaller one.",
+    "err_daily_limit": "This number has reached the daily limit for requests. Please try again tomorrow."
   }
 }

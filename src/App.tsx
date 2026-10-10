@@ -15,9 +15,13 @@ type Page = 'form' | 'profile' | 'track' | 'map';
 function AppShell() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [currentPage, setCurrentPage] = useState<Page>('form');
+  const [guest, setGuest] = useState(false);
 
   if (isLoading) return null;
-  if (!isAuthenticated) return <Login />;
+  if (!isAuthenticated) {
+    if (!guest) return <Login onContinueAsGuest={() => setGuest(true)} />;
+    return <ServiceRequestForm user={null} onSignInClick={() => setGuest(false)} />;
+  }
   if (!user?.profileComplete) return <OnboardingForm />;
 
   if (currentPage === 'profile') {

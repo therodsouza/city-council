@@ -30,6 +30,10 @@ const SEVERITY = [
   },
 ];
 
+// The API accepts only these photo types, up to 5 MB, and checks the file content.
+const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+
 interface Props {
   form: FormData;
   setVal: (key: keyof FormData, value: string | boolean) => void;
@@ -45,6 +49,7 @@ export default function StepIssue({ form, setVal, photoUrl, setPhotoUrl, setPhot
   const [dragOver, setDragOver] = useState(false);
   const [compressing, setCompressing] = useState(false);
   const [fileName, setFileName] = useState('');
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
 
@@ -56,16 +61,28 @@ export default function StepIssue({ form, setVal, photoUrl, setPhotoUrl, setPhot
   );
 
   const handleFile = async (file: File) => {
+    setPhotoError(null);
     setCompressing(true);
     try {
-      const compressed = await imageCompression(file, {
-        maxSizeMB: 1,
-        maxWidthOrHeight: 1920,
-        useWebWorker: true,
-      });
+      const options = { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true };
+      let compressed = await imageCompression(file, options);
+      if (!ALLOWED_PHOTO_TYPES.includes(compressed.type)) {
+        // e.g. GIF/BMP: re-encode as JPEG rather than have the API reject it.
+        compressed = await imageCompression(file, { ...options, fileType: 'image/jpeg' });
+      }
+      if (!ALLOWED_PHOTO_TYPES.includes(compressed.type)) {
+        setPhotoError(t('stepIssue.photo_type_error'));
+        return;
+      }
+      if (compressed.size > MAX_PHOTO_BYTES) {
+        setPhotoError(t('stepIssue.photo_size_error'));
+        return;
+      }
       setFileName(file.name);
       setPhotoUrl(URL.createObjectURL(compressed));
       setPhotoFile(compressed);
+    } catch {
+      setPhotoError(t('stepIssue.photo_type_error'));
     } finally {
       setCompressing(false);
     }
@@ -156,6 +173,10 @@ export default function StepIssue({ form, setVal, photoUrl, setPhotoUrl, setPhot
           </div>
         )}
 
+        {photoError && (
+          <p className="text-xs text-red-600" role="alert">{photoError}</p>
+        )}
+
         <input
           ref={cameraRef}
           type="file"
@@ -195,6 +216,7 @@ export default function StepIssue({ form, setVal, photoUrl, setPhotoUrl, setPhot
             onChange={e => setVal('description', e.target.value)}
             placeholder={t('stepIssue.description_placeholder')}
             rows={5}
+            maxLength={2000}
           />
           <div className="flex items-center justify-between mt-1">
             <span className="text-xs text-muted-foreground">{t('stepIssue.be_specific')}</span>

@@ -8,6 +8,9 @@ interface ImportMetaEnv {
   readonly VITE_OAUTH_SCOPES?: string;
   readonly VITE_PKCE_ENABLED?: string;
   readonly VITE_HTTPS_ONLY?: string;
+  readonly VITE_API_URL?: string;
+  readonly VITE_GOOGLE_MAPS_API_KEY?: string;
+  readonly VITE_TURNSTILE_SITE_KEY?: string;
 }
 
 interface ImportMeta {

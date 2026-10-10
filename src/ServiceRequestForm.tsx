@@ -9,13 +9,21 @@ import StepIssue from './components/StepIssue';
 import StepContact from './components/StepContact';
 import StepReview from './components/StepReview';
 import SuccessScreen from './components/SuccessScreen';
-import { buildServiceRequestPayload, submitServiceRequest } from './services/ServiceRequestService';
+import { PhoneVerification, type PhoneVerificationResult } from './components/PhoneVerification';
+import {
+  buildServiceRequestPayload,
+  submitAnonymousServiceRequest,
+  submitServiceRequest,
+} from './services/ServiceRequestService';
+import { anonymousSubmitErrorMessage, submitSpentToken } from './i18n/errors';
 
 interface Props {
   user: User | null;
-  onProfileClick: () => void;
-  onTrackClick: () => void;
+  onProfileClick?: () => void;
+  onTrackClick?: () => void;
   onMapClick?: () => void;
+  /** Guest mode (no user): lets the header offer signing in. */
+  onSignInClick?: () => void;
 }
 
 const EMPTY_FORM: Omit<FormData, 'name' | 'email'> = {
@@ -32,8 +40,9 @@ const EMPTY_FORM: Omit<FormData, 'name' | 'email'> = {
   agreeTerms: false,
 };
 
-export function ServiceRequestForm({ user, onProfileClick, onTrackClick, onMapClick }: Props) {
+export function ServiceRequestForm({ user, onProfileClick, onTrackClick, onMapClick, onSignInClick }: Props) {
   const { t } = useTranslation();
+  const isGuest = !user;
   const [step, setStep] = useState<Step>(1);
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,6 +55,8 @@ export function ServiceRequestForm({ user, onProfileClick, onTrackClick, onMapCl
   });
   const [photoUrl, setPhotoUrl] = useState('');
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  // The verification token is single-use and short-lived: keep it in memory only.
+  const [verification, setVerification] = useState<PhoneVerificationResult | null>(null);
 
   const setVal = (key: keyof FormData, value: string | boolean) => {
     setForm(prev => ({ ...prev, [key]: value }));
@@ -63,15 +74,22 @@ export function ServiceRequestForm({ user, onProfileClick, onTrackClick, onMapCl
     setSubmitted(false);
     setSubmitError(null);
     setReferenceNumber('');
+    setVerification(null);
   };
 
   return (
     <div className="min-h-screen bg-background font-sans flex flex-col">
-      <SiteHeader user={user} onProfileClick={onProfileClick} onTrackClick={onTrackClick} onMapClick={onMapClick} />
+      <SiteHeader
+        user={user}
+        onProfileClick={onProfileClick}
+        onTrackClick={onTrackClick}
+        onMapClick={onMapClick}
+        onSignInClick={onSignInClick}
+      />
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-8">
         {submitted ? (
-          <SuccessScreen form={form} refNum={referenceNumber} onReset={handleReset} onTrackClick={onTrackClick} />
+          <SuccessScreen form={form} refNum={referenceNumber} isGuest={isGuest} onReset={handleReset} onTrackClick={onTrackClick} />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-[272px_1fr] gap-8">
             <aside className="lg:sticky lg:top-8 self-start">
@@ -79,7 +97,13 @@ export function ServiceRequestForm({ user, onProfileClick, onTrackClick, onMapCl
             </aside>
             <div className="bg-card border border-border rounded-sm">
               {step === 1 && (
-                <StepLocation form={form} setVal={setVal} setCoords={setCoords} onNext={() => setStep(2)} />
+                <StepLocation
+                  form={form}
+                  setVal={setVal}
+                  setCoords={setCoords}
+                  canUseMyLocation={!isGuest}
+                  onNext={() => setStep(2)}
+                />
               )}
               {step === 2 && (
                 <StepIssue
@@ -96,6 +120,7 @@ export function ServiceRequestForm({ user, onProfileClick, onTrackClick, onMapCl
                 <StepContact
                   form={form}
                   setVal={setVal}
+                  isGuest={isGuest}
                   onNext={() => setStep(4)}
                   onBack={() => setStep(2)}
                 />
@@ -107,16 +132,41 @@ export function ServiceRequestForm({ user, onProfileClick, onTrackClick, onMapCl
                   photoUrl={photoUrl}
                   onBack={() => setStep(3)}
                   isSubmitting={isSubmitting}
+                  isGuest={isGuest}
+                  submitBlocked={isGuest && !verification}
+                  guestVerification={
+                    isGuest ? (
+                      <PhoneVerification
+                        verified={verification}
+                        onVerified={setVerification}
+                        onClear={() => setVerification(null)}
+                      />
+                    ) : undefined
+                  }
                   onSubmit={async () => {
                     setSubmitError(null);
+                    if (isGuest && (!verification || Date.now() >= verification.expiresAt)) {
+                      setVerification(null);
+                      setSubmitError(t('anon.err_verification_expired'));
+                      return;
+                    }
                     setIsSubmitting(true);
                     try {
-                      const payload = buildServiceRequestPayload(form);
-                      const refNum = await submitServiceRequest(payload, photoFile);
+                      const payload = buildServiceRequestPayload(form, { anonymous: isGuest });
+                      const refNum = verification && isGuest
+                        ? await submitAnonymousServiceRequest(payload, photoFile, verification.token)
+                        : await submitServiceRequest(payload, photoFile);
                       setReferenceNumber(refNum);
                       setSubmitted(true);
+                      setVerification(null);
                     } catch (e: unknown) {
-                      setSubmitError(e instanceof Error ? e.message : t('common.submit_failed'));
+                      if (isGuest) {
+                        // Only a 400/413 leaves the token usable; anything else spent it.
+                        if (submitSpentToken(e)) setVerification(null);
+                        setSubmitError(anonymousSubmitErrorMessage(e, t));
+                      } else {
+                        setSubmitError(e instanceof Error ? e.message : t('common.submit_failed'));
+                      }
                     } finally {
                       setIsSubmitting(false);
                     }

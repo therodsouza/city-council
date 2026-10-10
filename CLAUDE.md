@@ -3,8 +3,11 @@
 City Council service-request portal — a React 19 + Vite SPA (TypeScript, Tailwind
 v4, React Router). Users sign in with Google (OAuth implicit flow → Cognito
 Identity Pool), submit infrastructure service requests, track them, and admins
-view a request map. UI is internationalised with i18next (English + Brazilian
-Portuguese); see `docs/I18N_SPEC.md`.
+view a request map. Visitors without an account can also submit by verifying a
+Brazilian mobile number by SMS (Cloudflare Turnstile, then
+`/anonymous/service-requests`; see `docs/ANONYMOUS_SUBMISSION_SPEC.md`). UI is
+internationalised with i18next (English + Brazilian Portuguese); see
+`docs/I18N_SPEC.md`.
 
 ## Commands
 
@@ -38,7 +41,9 @@ npm run deploy        # runs scripts/deploy.sh
 
   The script fails fast with a clear message if either is missing.
 - App runtime config (`VITE_*` in `.env`) is baked into the bundle at build time,
-  so make sure `.env` is correct **before** deploying.
+  so make sure `.env` is correct **before** deploying. That includes
+  `VITE_TURNSTILE_SITE_KEY` (the public Turnstile site key): without it guests
+  cannot request an SMS code.
 
 ### What the deploy does (`scripts/deploy.sh`)
 
