@@ -87,5 +87,5 @@ export function genderLabel(value: string, t: TFunction): string {
 
 /** Maps the active i18n language to a BCP-47 tag for Intl date formatting. */
 export function dateLocale(language: string): string {
-  return language === 'pt-BR' ? 'pt-BR' : 'en-AU';
+  return language === 'pt-BR' ? 'pt-BR' : 'en-GB';
 }

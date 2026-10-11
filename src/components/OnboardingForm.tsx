@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import type { UserProfile } from '../contexts/AuthContext';
 import { putUserProfile } from '../services/UserService';
 import { GENDER_OPTIONS } from '../i18n/labels';
+import { useCepAutofill } from '../hooks/useCepAutofill';
 
 interface FieldError {
   dateOfBirth?: string;
@@ -80,7 +81,7 @@ function validate(form: UserProfile, t: TFunction): FieldError {
   if (!form.phone.trim()) errors.phone = t('onboarding.err_phone');
   if (!form.address.trim()) errors.address = t('onboarding.err_address');
   if (!form.suburb.trim()) errors.suburb = t('onboarding.err_suburb');
-  if (form.postcode && !/^\d{4}$/.test(form.postcode))
+  if (form.postcode && !/^\d{5}-?\d{3}$/.test(form.postcode))
     errors.postcode = t('onboarding.err_postcode');
 
   return errors;
@@ -101,6 +102,14 @@ export function OnboardingForm() {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+
+  const cep = useCepAutofill({ address: form.address, suburb: form.suburb }, fill =>
+    setForm((prev) => ({
+      ...prev,
+      ...(fill.address !== undefined ? { address: fill.address } : {}),
+      ...(fill.suburb !== undefined ? { suburb: fill.suburb } : {}),
+    })),
+  );
 
   const set = (field: keyof UserProfile) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -253,6 +262,32 @@ export function OnboardingForm() {
                   </span>
                 </div>
                 <div className="px-6 py-5 space-y-4">
+                  <div className="sm:max-w-xs">
+                    <Field label={t('onboarding.label_postcode')} hint={t('onboarding.postcode_hint')} error={errors.postcode}>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder={t('onboarding.postcode_placeholder')}
+                        maxLength={9}
+                        value={form.postcode}
+                        onChange={(e) => {
+                          const value = cep.handleCepChange(e.target.value);
+                          setForm((prev) => ({ ...prev, postcode: value }));
+                        }}
+                        className={fieldClass(errors.postcode)}
+                      />
+                      {cep.status === 'loading' && (
+                        <p className="text-xs text-muted-foreground mt-1.5">{t('cep.looking_up')}</p>
+                      )}
+                      {cep.status === 'filled' && (
+                        <p className="text-xs text-emerald-700 mt-1.5">{t('cep.filled')}</p>
+                      )}
+                      {cep.status === 'not_found' && (
+                        <p className="text-xs text-muted-foreground mt-1.5">{t('cep.not_found')}</p>
+                      )}
+                    </Field>
+                  </div>
+
                   <Field label={t('onboarding.label_address')} required error={errors.address}>
                     <input
                       type="text"
@@ -263,27 +298,15 @@ export function OnboardingForm() {
                     />
                   </Field>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <Field label={t('onboarding.label_suburb')} required error={errors.suburb}>
-                      <input
-                        type="text"
-                        placeholder={t('onboarding.suburb_placeholder')}
-                        value={form.suburb}
-                        onChange={set('suburb')}
-                        className={fieldClass(errors.suburb)}
-                      />
-                    </Field>
-                    <Field label={t('onboarding.label_postcode')} hint={t('onboarding.postcode_hint')} error={errors.postcode}>
-                      <input
-                        type="text"
-                        placeholder={t('onboarding.postcode_placeholder')}
-                        maxLength={4}
-                        value={form.postcode}
-                        onChange={set('postcode')}
-                        className={fieldClass(errors.postcode)}
-                      />
-                    </Field>
-                  </div>
+                  <Field label={t('onboarding.label_suburb')} required error={errors.suburb}>
+                    <input
+                      type="text"
+                      placeholder={t('onboarding.suburb_placeholder')}
+                      value={form.suburb}
+                      onChange={set('suburb')}
+                      className={fieldClass(errors.suburb)}
+                    />
+                  </Field>
                 </div>
               </div>
             </div>

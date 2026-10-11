@@ -67,4 +67,3 @@ status (and, for the two 400s on send, by the documented message) to i18n keys u
 
 - Signing in from guest mode redirects to Google, so any unsent form data is lost.
 - Anonymous requests cannot be tracked; no anonymous lookup exists in the API yet.
-- Postcode/suburb/`+61` placeholders elsewhere in the form are still Australian.

@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ArrowRight, LocateFixed, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { FormData } from '../types/form';
 import { FieldLabel, TextInput, TextArea } from './FormFields';
 import { useGeolocation } from '../hooks/useGeolocation';
+import { useCepAutofill } from '../hooks/useCepAutofill';
+import { cepDigits, formatCepInput } from '../services/CepService';
 import { reverseGeocode } from '../services/GeocodeService';
 import { SITE_TYPES } from '../i18n/labels';
 
@@ -23,6 +25,22 @@ export default function StepLocation({ form, setVal, setCoords, canUseMyLocation
   const [geocoding, setGeocoding] = useState(false);
   const [geocodeError, setGeocodeError] = useState<string | null>(null);
   const locating = geo.status === 'requesting' || geocoding;
+  const addressRef = useRef<HTMLInputElement>(null);
+  const [cepTouched, setCepTouched] = useState(false);
+  const cep = useCepAutofill({ address: form.address, suburb: form.suburb }, fill => {
+    if (fill.address !== undefined) {
+      setVal('address', fill.address);
+      // The street comes without a number: hand the cursor to the person to add it.
+      requestAnimationFrame(() => {
+        const input = addressRef.current;
+        if (!input) return;
+        input.focus();
+        input.setSelectionRange(input.value.length, input.value.length);
+      });
+    }
+    if (fill.suburb !== undefined) setVal('suburb', fill.suburb);
+  });
+  const cepIncomplete = cepTouched && !!form.postcode && !cepDigits(form.postcode);
 
   function handleUseMyLocation() {
     setGeocodeError(null);
@@ -32,7 +50,7 @@ export default function StepLocation({ form, setVal, setCoords, canUseMyLocation
         const result = await reverseGeocode(coords.latitude, coords.longitude);
         setVal('address', result.address);
         setVal('suburb', result.suburb);
-        setVal('postcode', result.postcode);
+        setVal('postcode', cepDigits(result.postcode) ? formatCepInput(result.postcode) : result.postcode);
         setCoords(coords.latitude, coords.longitude);
       } catch {
         setGeocodeError(t('stepLocation.geocode_error'));
@@ -73,29 +91,41 @@ export default function StepLocation({ form, setVal, setCoords, canUseMyLocation
           </div>
         )}
 
-        <div className="grid sm:grid-cols-3 gap-4">
-          <div className="sm:col-span-2">
-            <FieldLabel htmlFor="address" required>{t('stepLocation.street_address')}</FieldLabel>
-            <TextInput
-              id="address"
-              value={form.address}
-              onChange={e => setVal('address', e.target.value)}
-              placeholder={t('stepLocation.address_placeholder')}
-              autoComplete="street-address"
-              maxLength={300}
-            />
+        <div className="sm:max-w-xs">
+          <FieldLabel htmlFor="postcode" hint={t('cep.hint')}>{t('stepLocation.postcode')}</FieldLabel>
+          <TextInput
+            id="postcode"
+            value={form.postcode}
+            onChange={e => setVal('postcode', cep.handleCepChange(e.target.value))}
+            onBlur={() => setCepTouched(true)}
+            placeholder={t('stepLocation.postcode_placeholder')}
+            autoComplete="postal-code"
+            inputMode="numeric"
+            maxLength={9}
+          />
+          <div className="min-h-5 mt-1.5 text-xs" aria-live="polite">
+            {cep.status === 'loading' && (
+              <span className="flex items-center gap-1.5 text-muted-foreground">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" /> {t('cep.looking_up')}
+              </span>
+            )}
+            {cep.status === 'filled' && <span className="text-emerald-700">{t('cep.filled')}</span>}
+            {cep.status === 'not_found' && <span className="text-muted-foreground">{t('cep.not_found')}</span>}
+            {cep.status === 'idle' && cepIncomplete && <span className="text-red-600">{t('cep.invalid')}</span>}
           </div>
-          <div>
-            <FieldLabel htmlFor="postcode">{t('stepLocation.postcode')}</FieldLabel>
-            <TextInput
-              id="postcode"
-              value={form.postcode}
-              onChange={e => setVal('postcode', e.target.value)}
-              placeholder={t('stepLocation.postcode_placeholder')}
-              autoComplete="postal-code"
-              maxLength={20}
-            />
-          </div>
+        </div>
+
+        <div>
+          <FieldLabel htmlFor="address" required>{t('stepLocation.street_address')}</FieldLabel>
+          <TextInput
+            id="address"
+            ref={addressRef}
+            value={form.address}
+            onChange={e => setVal('address', e.target.value)}
+            placeholder={t('stepLocation.address_placeholder')}
+            autoComplete="street-address"
+            maxLength={300}
+          />
         </div>
 
         <div>

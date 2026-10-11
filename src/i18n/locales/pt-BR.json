@@ -130,8 +130,8 @@
     "postcode_hint": "Opcional",
     "address_placeholder": "Rua Exemplo, 123",
     "suburb_placeholder": "Bairro",
-    "postcode_placeholder": "0000",
-    "phone_placeholder": "+61400000000",
+    "postcode_placeholder": "00000-000",
+    "phone_placeholder": "(11) 91234-5678",
     "privacy_note": "Suas informações são armazenadas com segurança e usadas exclusivamente para fins de serviços municipais. Consulte nossa Política de Privacidade para mais detalhes.",
     "saving": "Salvando…",
     "submit": "Continuar para o Portal",
@@ -142,7 +142,7 @@
     "err_phone": "O telefone é obrigatório.",
     "err_address": "O endereço é obrigatório.",
     "err_suburb": "O bairro é obrigatório.",
-    "err_postcode": "O CEP deve ter 4 dígitos.",
+    "err_postcode": "O CEP deve ter 8 dígitos (ex.: 01310-100).",
     "err_api_generic": "Algo deu errado. Tente novamente."
   },
   "profile": {
@@ -189,11 +189,11 @@
     "use_my_location": "Usar minha localização",
     "geocode_error": "Não foi possível localizar o endereço. Digite-o manualmente.",
     "street_address": "Endereço",
-    "address_placeholder": "ex.: Rua do Porto, 42",
+    "address_placeholder": "ex.: Rua das Flores, 42",
     "postcode": "CEP",
-    "postcode_placeholder": "ex.: 6003",
+    "postcode_placeholder": "ex.: 01310-100",
     "suburb": "Bairro / Região",
-    "suburb_placeholder": "ex.: Northbridge",
+    "suburb_placeholder": "ex.: Bela Vista",
     "notes_label": "Observações Adicionais de Localização",
     "notes_hint": "Descreva pontos de referência ou acessos próximos para nos ajudar a encontrar o local exato.",
     "notes_placeholder": "ex.: Ao lado do ponto de ônibus, em frente à entrada do estacionamento na calçada leste…",
@@ -227,12 +227,12 @@
     "subtitle": "Forneça suas informações de contato para que possamos mantê-lo informado sobre sua solicitação.",
     "privacy": "Seus dados pessoais são coletados exclusivamente para o processamento desta solicitação de serviço e não serão compartilhados com terceiros sem o seu consentimento.",
     "full_name": "Nome Completo",
-    "name_placeholder": "ex.: Sarah Thompson",
+    "name_placeholder": "ex.: Maria Silva",
     "email": "E-mail",
     "email_placeholder": "voce@exemplo.com",
     "phone": "Telefone",
     "optional": "(opcional)",
-    "phone_placeholder": "ex.: 0412 345 678",
+    "phone_placeholder": "ex.: (11) 91234-5678",
     "updates_label": "Receber atualizações de status por e-mail",
     "updates_sub": "Avisaremos você quando sua solicitação for avaliada e resolvida.",
     "privacy_guest": "Seus dados são coletados apenas para processar esta solicitação. O celular verificado é armazenado com a solicitação e visível somente para os administradores da prefeitura."
@@ -340,5 +340,12 @@
     "err_photo_invalid": "Não foi possível aceitar a foto. Use uma imagem JPEG, PNG ou WebP.",
     "err_photo_too_large": "A foto é grande demais (máximo de 5 MB). Remova-a ou escolha uma menor.",
     "err_daily_limit": "Este número atingiu o limite diário de solicitações. Tente novamente amanhã."
+  },
+  "cep": {
+    "hint": "Preenche rua e bairro. Somente o CEP é enviado a um serviço público de consulta de CEP.",
+    "looking_up": "Consultando CEP…",
+    "filled": "Endereço encontrado para este CEP. Informe o número e confira os dados.",
+    "not_found": "Não encontramos um endereço para este CEP. Digite-o manualmente.",
+    "invalid": "O CEP tem 8 dígitos, ex.: 01310-100."
   }
 }

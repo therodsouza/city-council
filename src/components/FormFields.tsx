@@ -19,7 +19,7 @@ export function FieldLabel({ children, required, hint, htmlFor }: FieldLabelProp
   );
 }
 
-export function TextInput({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
+export function TextInput({ className, ...props }: React.ComponentProps<'input'>) {
   return (
     <input
       className={`w-full px-3.5 py-2.5 border border-border bg-white rounded-sm text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-colors${className ? ' ' + className : ''}`}

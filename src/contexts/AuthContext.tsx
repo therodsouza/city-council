@@ -109,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser({
       id: 'mock-admin-001',
       name: 'Admin User',
-      email: 'admin@council.gov.au',
+      email: 'admin@example.com',
       photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin',
       profileComplete: true,
       profile: null,

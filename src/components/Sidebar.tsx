@@ -85,7 +85,7 @@ export default function Sidebar({ step, onStepClick }: SidebarProps) {
         </p>
         <div className="flex items-center gap-2">
           <Phone className="w-4 h-4 text-primary" />
-          <span className="text-base font-semibold text-foreground">1300 000 000</span>
+          <span className="text-base font-semibold text-foreground">156</span>
         </div>
         <div className="text-xs text-muted-foreground mt-1">{t('sidebar.available')}</div>
       </div>

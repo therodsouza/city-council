@@ -62,7 +62,7 @@ interface UserProfile {
   gender: string;       // Selected option from GENDER_OPTIONS
   address: string;      // Street address
   suburb: string;
-  postcode: string;     // Optional, 4-digit Australian postcode
+  postcode: string;     // Optional, Brazilian CEP (8 digits, hyphen optional)
 }
 ```
 
@@ -149,7 +149,7 @@ interface FieldError {
 | `gender` | Required | "Please select an option." |
 | `address` | Required (non-empty after trim) | "Street address is required." |
 | `suburb` | Required (non-empty after trim) | "Suburb is required." |
-| `postcode` | Optional; if provided must match `/^\d{4}$/` | "Postcode must be 4 digits." |
+| `postcode` | Optional; if provided must match `/^\d{5}-?\d{3}$/` | "CEP must have 8 digits (e.g. 01310-100)." |
 
 Age calculation accounts for whether the birthday has passed in the current year:
 
@@ -333,7 +333,7 @@ Three `InfoRow` entries:
 
 ```typescript
 function formatDob(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-AU", {
+  return new Date(iso).toLocaleDateString("en-GB", {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -373,7 +373,7 @@ When porting this feature to another project:
 4. **Gate placement** — The onboarding check must run after authentication and before any other page branch. If using a router (React Router, Next.js), implement it as a layout-level redirect: redirect to `/onboarding` if `isAuthenticated && !profileComplete`, with `/onboarding` itself being the only unguarded authenticated route.
 5. **Icons** — `lucide-react`: `Wrench`, `Calendar`, `MapPin`, `User`, `ChevronRight`, `AlertCircle`, `Shield`, `Mail`, `LogOut`, `ArrowLeft`.
 6. **Gender options** — Adjust `GENDER_OPTIONS` to match the organisation's style guide or local requirements. Always include "Prefer not to say."
-7. **Postcode validation** — Current regex (`/^\d{4}$/`) targets Australian postcodes. Replace with the appropriate pattern for other locales.
+7. **Postcode validation** — Current regex (`/^\d{5}-?\d{3}$/`) targets Brazilian CEPs. Replace with the appropriate pattern for other locales.
 8. **Backend persistence** — `completeProfile()` currently only updates local React state. In production, call your API inside `completeProfile` before (or instead of) the `setUser` update. If the API call fails, surface the error and do not set `profileComplete: true`.
 9. **Session persistence** — Current implementation is in-memory only. Wrap `setUser` with `localStorage` or a session cookie if users should not be re-prompted on page refresh.
 
@@ -385,7 +385,7 @@ When porting this feature to another project:
 |---|---|
 | Edit profile | Allow users to update DOB, gender, and address from the Profile page without going through the onboarding flow again |
 | Field pre-population | If the identity provider returns DOB or address claims (e.g. via Google People API), pre-fill those fields |
-| Multi-locale address | Current address model (street / suburb / postcode) is AU-centric; replace with a locale-aware address component for international deployments |
+| Multi-locale address | Current address model (street / neighbourhood / CEP) is Brazil-centric; replace with a locale-aware address component for international deployments |
 | Terms & privacy checkbox | Add an explicit consent checkbox if legal requires users to acknowledge the privacy policy at account creation time |
 | Photo upload | Onboarding is a natural place to let users set a profile photo if not using the Google avatar |
 | Accessibility audit | Date input (`<input type="date">`) rendering varies across browsers and screen readers; consider a custom date picker with accessible labelling for production |
