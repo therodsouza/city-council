@@ -1,8 +1,9 @@
 import { useRef, useState } from 'react';
-import { ArrowRight, LocateFixed, Loader2 } from 'lucide-react';
+import { ArrowRight, LocateFixed, Loader2, MapPinOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { FormData } from '../types/form';
 import { FieldLabel, TextInput, TextArea } from './FormFields';
+import LocationPicker from './LocationPicker';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { useCepAutofill } from '../hooks/useCepAutofill';
 import { cepDigits, formatCepInput } from '../services/CepService';
@@ -13,17 +14,21 @@ interface Props {
   form: FormData;
   setVal: (key: keyof FormData, value: string | boolean) => void;
   setCoords: (lat: number, lng: number) => void;
-  /** Reverse geocoding needs an account; guests type the address instead. */
-  canUseMyLocation?: boolean;
+  clearCoords: () => void;
+  /** Reverse geocoding needs an account, so guests get a pin but type the address themselves. */
+  isGuest?: boolean;
   onNext: () => void;
 }
 
-export default function StepLocation({ form, setVal, setCoords, canUseMyLocation = true, onNext }: Props) {
+export default function StepLocation({ form, setVal, setCoords, clearCoords, isGuest = false, onNext }: Props) {
   const { t } = useTranslation();
   const canProceed = !!(form.address.trim() && form.suburb.trim() && form.siteType);
   const geo = useGeolocation();
   const [geocoding, setGeocoding] = useState(false);
   const [geocodeError, setGeocodeError] = useState<string | null>(null);
+  // Only a GPS fix has one; a pin placed by hand does not.
+  const [accuracy, setAccuracy] = useState<number | null>(null);
+  const hasPin = form.lat !== undefined && form.lng !== undefined;
   const locating = geo.status === 'requesting' || geocoding;
   const addressRef = useRef<HTMLInputElement>(null);
   const [cepTouched, setCepTouched] = useState(false);
@@ -42,16 +47,29 @@ export default function StepLocation({ form, setVal, setCoords, canUseMyLocation
   });
   const cepIncomplete = cepTouched && !!form.postcode && !cepDigits(form.postcode);
 
+  function placePin(lat: number, lng: number) {
+    setAccuracy(null);
+    setCoords(lat, lng);
+  }
+
+  function removePin() {
+    setAccuracy(null);
+    clearCoords();
+  }
+
   function handleUseMyLocation() {
     setGeocodeError(null);
     geo.request(async coords => {
+      // The pin counts even if the address lookup below fails.
+      setAccuracy(coords.accuracy);
+      setCoords(coords.latitude, coords.longitude);
+      if (isGuest) return;
       setGeocoding(true);
       try {
         const result = await reverseGeocode(coords.latitude, coords.longitude);
         setVal('address', result.address);
         setVal('suburb', result.suburb);
         setVal('postcode', cepDigits(result.postcode) ? formatCepInput(result.postcode) : result.postcode);
-        setCoords(coords.latitude, coords.longitude);
       } catch {
         setGeocodeError(t('stepLocation.geocode_error'));
       } finally {
@@ -70,26 +88,50 @@ export default function StepLocation({ form, setVal, setCoords, canUseMyLocation
       </div>
 
       <div className="px-8 py-6 space-y-6">
-        {canUseMyLocation && (
-          <div className="flex flex-col gap-2">
-            <button
-              type="button"
-              disabled={locating}
-              onClick={handleUseMyLocation}
-              className="flex items-center gap-2 w-fit px-4 py-2 border border-border bg-white text-foreground text-sm font-semibold rounded-sm hover:border-primary/40 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {locating ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <LocateFixed className="w-4 h-4" />
-              )}
-              {locating ? t('stepLocation.detecting') : t('stepLocation.use_my_location')}
-            </button>
-            {(geo.error || geocodeError) && (
-              <p className="text-xs text-red-600">{geo.error ?? geocodeError}</p>
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            disabled={locating}
+            onClick={handleUseMyLocation}
+            className="flex items-center gap-2 w-fit px-4 py-2 border border-border bg-white text-foreground text-sm font-semibold rounded-sm hover:border-primary/40 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {locating ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <LocateFixed className="w-4 h-4" />
+            )}
+            {locating ? t('stepLocation.detecting') : t('stepLocation.use_my_location')}
+          </button>
+          {(geo.error || geocodeError) && (
+            <p className="text-xs text-red-600">{geo.error ?? geocodeError}</p>
+          )}
+
+          <LocationPicker lat={form.lat} lng={form.lng} onChange={placePin} />
+
+          <div className="flex items-center justify-between gap-3 min-h-5 text-xs" aria-live="polite">
+            {hasPin ? (
+              <>
+                <span className="text-emerald-700">
+                  {accuracy !== null
+                    ? t('stepLocation.pin_gps', { meters: Math.round(accuracy) })
+                    : t('stepLocation.pin_manual')}
+                </span>
+                <button
+                  type="button"
+                  onClick={removePin}
+                  className="flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                >
+                  <MapPinOff className="w-3.5 h-3.5" /> {t('stepLocation.pin_remove')}
+                </button>
+              </>
+            ) : (
+              <span className="text-muted-foreground">
+                {t('stepLocation.map_hint')}
+                {isGuest && ` ${t('stepLocation.guest_locate_hint')}`}
+              </span>
             )}
           </div>
-        )}
+        </div>
 
         <div className="sm:max-w-xs">
           <FieldLabel htmlFor="postcode" hint={t('cep.hint')}>{t('stepLocation.postcode')}</FieldLabel>

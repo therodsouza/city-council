@@ -446,7 +446,7 @@ Content-Type: multipart/form-data
 | Field                      | Rule |
 |----------------------------|------|
 | `submittedAt`              | required |
-| `location.address`         | required, up to 300 characters |
+| `location.address`         | required **unless `lat`/`lng` are sent**, up to 300 characters |
 | `location.suburb`          | up to 100 characters |
 | `location.postcode`        | up to 20 characters |
 | `location.siteType`        | up to 100 characters |
@@ -460,6 +460,10 @@ Content-Type: multipart/form-data
 | `contact.phone`            | optional, up to 30 characters; free text, separate from the verified number |
 
 - The `photo` must be a **JPEG, PNG or WebP** of at most **5 MB**, and its content must really be that type. Other types and renamed files are rejected.
+
+**Address from coordinates.** There is no public reverse-geocoding endpoint (section 1 needs a login). Instead, send `location.lat` and `location.lng` and leave `address`, `suburb` and `postcode` blank: the server looks them up after the phone verification has passed and stores what it finds. Anything the person typed is kept as typed; only blank fields are filled. This is best effort. If the lookup finds nothing or the provider is down, the request is still created with the blank fields stored as empty strings and the coordinates intact, so the form cannot count on the address being filled in. The response does not echo the address.
+
+**Coordinates from the address.** The opposite fallback: when `location.lat` and `location.lng` are missing, the server looks up the typed address (street, neighbourhood and CEP, restricted to Brazil) after the phone verification has passed, and stores the coordinates it finds. Coordinates the person sent, whether from "Use my location" or a pin placed on the map, are never replaced. This is best effort. Only street-level or better results are used; a result that only identifies a city or region is discarded. If nothing usable is found or the provider is down, the request is still created, without coordinates. The response does not echo them.
 
 **Success response — `201 Created`**
 

@@ -21,7 +21,7 @@ the person is still filling in the form.
 
 | Area | Behaviour for guests |
 |---|---|
-| Location | "Use my location" hidden: `/geocode/reverse` requires a JWT |
+| Location | "Use my location" only drops a pin (`/geocode/reverse` requires a JWT, so the address is not filled in); the map pin can also be placed or dragged by hand. The payload carries `lat`/`lng` when a pin is set. Without a pin the server locates the typed address as a fallback (api-contract section 8) |
 | Contact | Email optional (omitted from the payload when empty); "email updates" checkbox hidden while email is empty and `receiveUpdates` is sent as `false` |
 | Photo | JPEG/PNG/WebP ≤ 5 MB, checked after compression (other types are re-encoded as JPEG). Applies to every user |
 | Field limits | `maxLength` on inputs matching the contract (applies to every user) |

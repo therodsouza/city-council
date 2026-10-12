@@ -66,6 +66,10 @@ export function ServiceRequestForm({ user, onProfileClick, onTrackClick, onMapCl
     setForm(prev => ({ ...prev, lat, lng }));
   };
 
+  const clearCoords = () => {
+    setForm(prev => ({ ...prev, lat: undefined, lng: undefined }));
+  };
+
   const handleReset = () => {
     setForm({ ...EMPTY_FORM, name: user?.name || '', email: user?.email || '' });
     setPhotoUrl('');
@@ -101,7 +105,8 @@ export function ServiceRequestForm({ user, onProfileClick, onTrackClick, onMapCl
                   form={form}
                   setVal={setVal}
                   setCoords={setCoords}
-                  canUseMyLocation={!isGuest}
+                  clearCoords={clearCoords}
+                  isGuest={isGuest}
                   onNext={() => setStep(2)}
                 />
               )}

@@ -222,6 +222,17 @@ className="border-border bg-white text-muted-foreground
 
 ### Step 1: Location Details
 
+**Map pin (all users, above the address fields):**
+
+- "Use my location" takes a GPS fix and drops the pin. Signed-in users also get the address,
+  neighbourhood and CEP filled in from it; guests do not (reverse geocoding needs an account).
+- The map (`LocationPicker`) lets anyone click to place the pin or drag it to adjust. It is
+  hidden when `VITE_GOOGLE_MAPS_API_KEY` is not set.
+- A status line says whether the pin came from GPS (with its accuracy) or was set by hand, and
+  offers "Remove pin". The pin is optional: `lat`/`lng` are sent only when it is set, and for
+  guests the server falls back to locating the typed address.
+- The pin never overwrites what was typed, and typing never moves the pin.
+
 **Fields:**
 
 1. **Street Address** (required, 2/3 width)
