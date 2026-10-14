@@ -35,8 +35,8 @@ npm run deploy        # runs scripts/deploy.sh
   `AWS_PROFILE`, or exported `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`).
 - **Two environment variables** must be set, via `.env` (auto-loaded by the
   script, does not override already-exported vars) or the shell environment:
-  - `DEPLOY_S3_BUCKET` — target bucket, e.g. `city-council.rodstack.net`.
-    Not currently in `.env`; export it in your shell or add it there.
+  - `DEPLOY_S3_BUCKET` — target bucket (`city-council.rodstack.net`;
+    present in `.env`).
   - `DEPLOY_CF_DISTRIBUTION_ID` — CloudFront distribution to invalidate
     (present in `.env`).
 
