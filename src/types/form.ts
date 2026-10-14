@@ -9,7 +9,6 @@ export interface FormData {
   locationNote: string;
   siteType: string;
   category: string;
-  severity: string;
   description: string;
   name: string;
   email: string;

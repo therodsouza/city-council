@@ -2,7 +2,7 @@ import React from 'react';
 import { ArrowLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { FormData, Step } from '../types/form';
-import { categoryLabel, severityPriorityLabel, siteTypeLabel } from '../i18n/labels';
+import { categoryLabel, siteTypeLabel } from '../i18n/labels';
 
 function ReviewSection({
   title,
@@ -80,7 +80,6 @@ export default function StepReview({ form, setVal, photoUrl, onBack, onSubmit, o
 
         <ReviewSection title={t('stepReview.section_issue')} onEdit={() => onEdit(2)}>
           <ReviewRow label={t('stepReview.row_category')} value={categoryLabel(form.category, t)} />
-          <ReviewRow label={t('stepReview.row_severity')} value={severityPriorityLabel(form.severity, t)} />
           <ReviewRow label={t('stepReview.row_description')} value={form.description} />
           {photoUrl && <ReviewRow label={t('stepReview.row_photo')} value={t('stepReview.photo_attached')} />}
         </ReviewSection>

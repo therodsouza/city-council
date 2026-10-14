@@ -7,13 +7,16 @@ import { SiteHeader } from './SiteHeader';
 import { ApiError } from '../services/ApiError';
 import {
   getServiceRequest,
+  updateServiceRequestSeverity,
   updateServiceRequestStatus,
   ServiceRequestDetail,
 } from '../services/ServiceRequestService';
 import {
   categoryLabel, severityShortLabel, siteTypeLabel, statusLabel, dateLocale,
 } from '../i18n/labels';
-import { Status, STATUS_ORDER, STATUS_CONFIG, CATEGORY_ICONS, StatusBadge, toStatus } from './requestUi';
+import {
+  Severity, SEVERITY_ORDER, Status, STATUS_ORDER, STATUS_CONFIG, CATEGORY_ICONS, StatusBadge, toSeverity, toStatus,
+} from './requestUi';
 
 interface AdminRequestDetailProps {
   id: string;
@@ -30,6 +33,12 @@ const MAP_OPTIONS: google.maps.MapOptions = {
   fullscreenControl: false,
 };
 const PIN_ZOOM = 16;
+
+const SEVERITY_DOT: Record<Severity, string> = {
+  high: 'bg-red-500',
+  medium: 'bg-amber-500',
+  low: 'bg-emerald-500',
+};
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -109,6 +118,13 @@ export function AdminRequestDetail({ id, user, onBack, onProfileClick }: AdminRe
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
+  // '' means no severity chosen yet; it is only the starting point for an unassessed request.
+  const [nextSeverity, setNextSeverity] = useState<Severity | ''>('');
+  const [severityNote, setSeverityNote] = useState('');
+  const [isSavingSeverity, setIsSavingSeverity] = useState(false);
+  const [severityError, setSeverityError] = useState<string | null>(null);
+  const [severitySaved, setSeveritySaved] = useState(false);
+
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
 
   useEffect(() => {
@@ -119,11 +135,15 @@ export function AdminRequestDetail({ id, user, onBack, onProfileClick }: AdminRe
     setNote('');
     setSaveError(null);
     setSaved(false);
+    setSeverityNote('');
+    setSeverityError(null);
+    setSeveritySaved(false);
     getServiceRequest(id)
       .then((r) => {
         if (cancelled) return;
         setRequest(r);
         setNextStatus(toStatus(r.status));
+        setNextSeverity(toSeverity(r.severity) ?? '');
       })
       .catch((e: unknown) => {
         if (cancelled) return;
@@ -144,6 +164,29 @@ export function AdminRequestDetail({ id, user, onBack, onProfileClick }: AdminRe
   const currentStatus = toStatus(request?.status);
   const trimmedNote = note.trim();
   const unchanged = nextStatus === currentStatus && trimmedNote === '';
+
+  const currentSeverity = toSeverity(request?.severity);
+  const trimmedSeverityNote = severityNote.trim();
+  const severityUnchanged = nextSeverity === '' || nextSeverity === currentSeverity;
+
+  const handleSaveSeverity = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!request || isSavingSeverity || severityUnchanged) return;
+    setIsSavingSeverity(true);
+    setSeverityError(null);
+    setSeveritySaved(false);
+    try {
+      const updated = await updateServiceRequestSeverity(request.id, nextSeverity, trimmedSeverityNote);
+      setRequest(updated);
+      setNextSeverity(toSeverity(updated.severity) ?? '');
+      setSeverityNote('');
+      setSeveritySaved(true);
+    } catch (err) {
+      setSeverityError(err instanceof Error && err.message ? err.message : t('admin.detail.severity_save_error'));
+    } finally {
+      setIsSavingSeverity(false);
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -224,7 +267,7 @@ export function AdminRequestDetail({ id, user, onBack, onProfileClick }: AdminRe
                 {request.issueDescription}
               </p>
               <dl className="grid grid-cols-2 gap-4">
-                <Field label={t('admin.detail.severity')}>{severityShortLabel(request.severity, t)}</Field>
+                <Field label={t('admin.detail.severity')}>{severityShortLabel(currentSeverity, t)}</Field>
                 <Field label={t('admin.detail.site_type')}>{siteTypeLabel(request.siteType, t) || '—'}</Field>
                 <Field label={t('admin.detail.submitted')}>{formatDateTime(request.submittedAt)}</Field>
                 <Field label={t('admin.detail.updated')}>{formatDateTime(request.updatedAt) || '—'}</Field>
@@ -304,6 +347,57 @@ export function AdminRequestDetail({ id, user, onBack, onProfileClick }: AdminRe
               </form>
             </Card>
 
+            <Card title={t('admin.detail.severity_card')}>
+              <form onSubmit={handleSaveSeverity} className="space-y-3">
+                <div>
+                  <label htmlFor="severity-select" className="block text-xs font-mono uppercase tracking-widest text-muted-foreground mb-1">
+                    {t('admin.detail.new_severity')}
+                  </label>
+                  <select
+                    id="severity-select"
+                    value={nextSeverity}
+                    onChange={(e) => { setNextSeverity(e.target.value as Severity); setSeveritySaved(false); }}
+                    disabled={isSavingSeverity}
+                    className="w-full py-2.5 px-3 text-sm border border-border rounded-sm bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                  >
+                    {/* Once assessed, a request cannot go back to "not assessed". */}
+                    {currentSeverity === null && (
+                      <option value="" disabled>{severityShortLabel(null, t)}</option>
+                    )}
+                    {SEVERITY_ORDER.map((s) => (
+                      <option key={s} value={s}>{severityShortLabel(s, t)}</option>
+                    ))}
+                  </select>
+                  {currentSeverity === null && !severitySaved && (
+                    <p className="text-xs text-muted-foreground mt-1">{t('admin.detail.severity_hint')}</p>
+                  )}
+                </div>
+                <div>
+                  <label htmlFor="severity-note" className="block text-xs font-mono uppercase tracking-widest text-muted-foreground mb-1">
+                    {t('admin.detail.note')}
+                  </label>
+                  <textarea
+                    id="severity-note"
+                    value={severityNote}
+                    onChange={(e) => { setSeverityNote(e.target.value); setSeveritySaved(false); }}
+                    maxLength={NOTE_MAX_LENGTH}
+                    rows={2}
+                    disabled={isSavingSeverity}
+                    className="w-full py-2 px-3 text-sm border border-border rounded-sm bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-y"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={isSavingSeverity || severityUnchanged}
+                  className="w-full px-4 py-2.5 rounded-sm bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSavingSeverity ? t('admin.detail.saving') : t('admin.detail.save')}
+                </button>
+                {severityError && <p className="text-xs text-destructive" role="alert">{severityError}</p>}
+                {severitySaved && <p className="text-xs text-emerald-700" role="status">{t('admin.detail.severity_saved')}</p>}
+              </form>
+            </Card>
+
             <Card title={t('admin.detail.reporter')}>
               <dl className="space-y-3">
                 <Field label={t('admin.detail.name')}>{request.contactName || '—'}</Field>
@@ -338,19 +432,33 @@ export function AdminRequestDetail({ id, user, onBack, onProfileClick }: AdminRe
                 <p className="text-sm text-muted-foreground">{t('admin.detail.no_history')}</p>
               ) : (
                 <ol className="space-y-4">
-                  {history.map((h, i) => (
-                    <li key={`${h.changedAt}-${i}`} className="relative pl-4 border-l-2 border-border">
-                      <span className={`absolute -left-[5px] top-1.5 w-2 h-2 rounded-full ${STATUS_CONFIG[toStatus(h.status)].dot}`} />
-                      <StatusBadge status={toStatus(h.status)} compact />
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {formatDateTime(h.changedAt)}
-                        {h.changedByEmail ? ` · ${h.changedByEmail}` : ''}
-                      </div>
-                      {h.note && (
-                        <p className="text-sm text-foreground mt-1 whitespace-pre-wrap break-words">{h.note}</p>
-                      )}
-                    </li>
-                  ))}
+                  {history.map((h, i) => {
+                    const entrySeverity = toSeverity(h.severity);
+                    return (
+                      <li key={`${h.changedAt}-${i}`} className="relative pl-4 border-l-2 border-border">
+                        {entrySeverity ? (
+                          <>
+                            <span className={`absolute -left-[5px] top-1.5 w-2 h-2 rounded-full ${SEVERITY_DOT[entrySeverity]}`} />
+                            <span className="text-xs font-mono text-foreground">
+                              {t('admin.detail.history_severity', { severity: severityShortLabel(entrySeverity, t) })}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span className={`absolute -left-[5px] top-1.5 w-2 h-2 rounded-full ${STATUS_CONFIG[toStatus(h.status)].dot}`} />
+                            <StatusBadge status={toStatus(h.status)} compact />
+                          </>
+                        )}
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {formatDateTime(h.changedAt)}
+                          {h.changedByEmail ? ` · ${h.changedByEmail}` : ''}
+                        </div>
+                        {h.note && (
+                          <p className="text-sm text-foreground mt-1 whitespace-pre-wrap break-words">{h.note}</p>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ol>
               )}
             </Card>

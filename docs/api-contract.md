@@ -101,7 +101,6 @@ Content-Type: multipart/form-data
   },
   "issue": {
     "category": "pothole",
-    "severity": "high",
     "description": "Large pothole approximately 30cm wide causing damage to vehicles."
   },
   "contact": {
@@ -139,7 +138,7 @@ Content-Type: multipart/form-data
 - `dumping` — Illegal Dumping / Litter
 - `other` — Other Infrastructure
 
-`issue.severity` — One of: `low`, `medium`, `high`
+`issue.severity` — **No longer accepted.** Severity is assessed by an administrator after submission (section 11). If a client still sends it, the server ignores it and the request is stored without a severity.
 
 `contact.phone` — Optional. May be empty string.
 
@@ -453,7 +452,7 @@ Content-Type: multipart/form-data
 | `location.notes`           | up to 1000 characters |
 | `location.lat` / `lng`     | both or neither; within −90…90 and −180…180 |
 | `issue.category`           | required, one of the values in section 2 |
-| `issue.severity`           | required, one of `low`, `medium`, `high` |
+| `issue.severity`           | not accepted; ignored if sent (see section 2) |
 | `issue.description`        | required, up to 2000 characters |
 | `contact.name`             | required, up to 200 characters |
 | `contact.email`            | optional, up to 254 characters |
@@ -537,6 +536,7 @@ Authorization: Bearer <token>
   "imageUrl": "https://…amazonaws.com/images/3f6c…_photo.jpg?X-Amz-Signature=…",
   "statusHistory": [
     { "status": "received", "changedAt": "2026-06-04T08:30:01.120Z", "changedBySub": "1088…", "changedByEmail": "jane@example.com" },
+    { "severity": "high", "changedAt": "2026-06-04T09:10:44.002Z", "changedBySub": "1177…", "changedByEmail": "admin@example.com", "note": "Vehicle damage reported" },
     { "status": "in_progress", "changedAt": "2026-06-05T14:02:11.480Z", "changedBySub": "1177…", "changedByEmail": "admin@example.com", "note": "Crew booked for Thursday" }
   ]
 }
@@ -544,12 +544,13 @@ Authorization: Bearer <token>
 
 | Field            | Type   | Description |
 |------------------|--------|-------------|
+| `severity`       | string | One of `low`, `medium`, `high`, or `null`/absent when no administrator has assessed the request yet ("not assessed"). Set only through section 11; requests created before this change keep the value their submitter chose until an admin changes it. |
 | `status`         | string | One of `received`, `under_review`, `in_progress`, `resolved`, `closed`. Requests created before statuses existed read as `received`. |
 | `updatedAt`      | string | When the status last changed. Absent if it never has. |
 | `imageUrl`       | string | A temporary link (valid 15 minutes) to the photo; absent when the request has no photo. Load it straight into an `<img>`; it needs no `Authorization` header. Fetch the request again for a fresh link. `imagePath` is the internal storage key and is of no use to the browser. |
-| `statusHistory`  | array  | Oldest first. Each entry: `status`, `changedAt`, and, when known, `changedBySub`, `changedByEmail` and `note`. The first entry is the submission itself. Present on this endpoint only; the list endpoint leaves it out. |
+| `statusHistory`  | array  | Oldest first. Each entry has `changedAt` and, when known, `changedBySub`, `changedByEmail` and `note`, plus **either** `status` (a status change, section 10) **or** `severity` (a severity change, section 11). The first entry is the submission itself. Present on this endpoint only; the list endpoint leaves it out. |
 
-`GET /service-requests` returns the same fields per item (including `status` and `updatedAt`) but never `statusHistory` or `imageUrl`.
+`GET /service-requests` returns the same fields per item (including `status`, `severity` and `updatedAt`) but never `statusHistory` or `imageUrl`.
 
 **Error responses**
 
@@ -602,6 +603,49 @@ The updated request, in the shape of section 9 (with `statusHistory` and `imageU
 Changes are applied atomically, so two admins acting at once each leave their own history entry.
 
 `contact.receiveUpdates` e-mails are still not sent: changing a status does not notify the reporter.
+
+---
+
+### 11. Update Request Severity (admin)
+
+Sets a request's severity and appends an entry to its history. Severity is assessed only by administrators: submitters cannot set it (section 2). A new request has no severity until the first call here, and once set it cannot be cleared, only changed to another value.
+
+```
+PATCH /service-requests/{id}/severity
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+**Request body**
+
+```json
+{ "severity": "high", "note": "Vehicle damage reported" }
+```
+
+| Field      | Type   | Required | Description |
+|------------|--------|----------|-------------|
+| `severity` | string | yes      | One of `low`, `medium`, `high` |
+| `note`     | string | no       | Up to 1000 characters; blank is treated as absent. Shown in the history. |
+
+Sending the severity the request already has is rejected (`400`).
+
+**Success response — `200 OK`**
+
+The updated request, in the shape of section 9 (with `statusHistory` and `imageUrl`). The new history entry carries `severity` (and no `status`), `changedAt`, the admin's `sub` and token email, and the `note` if any. `updatedAt` is not touched: it tracks status changes only.
+
+**Error responses**
+
+| Status | `message`                                          | When |
+|--------|----------------------------------------------------|------|
+| `400`  | `severity is required`                             | `severity` missing |
+| `400`  | `note must be at most 1000 characters`             | Note too long |
+| `400`  | `Request already has this severity`                | Same severity as the current one |
+| `400`  | —                                                  | `severity` is not one of the values above (the body fails to parse; the message is not guaranteed) |
+| `401`  | —                                                  | Missing or invalid JWT |
+| `403`  | —                                                  | The caller is not an admin |
+| `404`  | —                                                  | No such request |
+
+Changes are applied atomically, so two admins acting at once each leave their own history entry.
 
 ---
 

@@ -24,6 +24,17 @@ export const STATUS_CONFIG: Record<Status, {
   closed:       { dot: 'bg-neutral-400', pill: 'bg-neutral-100 border border-neutral-200', text: 'text-neutral-600', pin: 'bg-neutral-400', hex: '#a3a3a3' },
 };
 
+export type Severity = 'low' | 'medium' | 'high';
+
+/** Highest first, the order admins scan them in. */
+export const SEVERITY_ORDER: Severity[] = ['high', 'medium', 'low'];
+
+/** The API sends the severity slug; a missing or unknown value means the request is not assessed yet. */
+export function toSeverity(value: string | null | undefined): Severity | null {
+  const slug = value?.toLowerCase();
+  return slug === 'low' || slug === 'medium' || slug === 'high' ? slug : null;
+}
+
 export const CATEGORY_ICONS: Record<string, React.ElementType> = {
   pothole:  HardHat,
   graffiti: Paintbrush,

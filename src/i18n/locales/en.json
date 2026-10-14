@@ -50,12 +50,8 @@
   "severityShort": {
     "low": "Low",
     "medium": "Medium",
-    "high": "High"
-  },
-  "severityPriority": {
-    "low": "Low Priority",
-    "medium": "Medium Priority",
-    "high": "High Priority"
+    "high": "High",
+    "unassessed": "Not assessed"
   },
   "status": {
     "received": "Received",
@@ -225,7 +221,6 @@
     "char_count": "{{count}} chars",
     "category": "Category",
     "category_placeholder": "Select a category…",
-    "severity": "Severity",
     "photo_type_error": "This image could not be used. Please choose a JPEG, PNG or WebP photo.",
     "photo_size_error": "This photo is too large (maximum 5 MB). Please choose a smaller one."
   },
@@ -257,7 +252,6 @@
     "row_site_type": "Site Type",
     "row_notes": "Notes",
     "row_category": "Category",
-    "row_severity": "Severity",
     "row_description": "Description",
     "row_photo": "Photo",
     "photo_attached": "Photo attached",
@@ -371,8 +365,14 @@
       "wants_updates": "Wants updates",
       "yes": "Yes",
       "no": "No",
-      "history": "Status history",
-      "no_history": "No history recorded for this request."
+      "history": "History",
+      "no_history": "No history recorded for this request.",
+      "severity_card": "Severity",
+      "new_severity": "Set severity to",
+      "severity_hint": "Set by the council team after reviewing the request.",
+      "severity_saved": "Severity updated.",
+      "severity_save_error": "Could not update the severity. Please try again.",
+      "history_severity": "Severity set to {{severity}}"
     }
   },
   "anon": {

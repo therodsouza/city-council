@@ -26,12 +26,9 @@ export function categoryLabel(value: string, t: TFunction): string {
   return t(`categories.${value.toLowerCase()}`, { defaultValue: value });
 }
 
-export function severityShortLabel(value: string, t: TFunction): string {
-  return t(`severityShort.${value}`, { defaultValue: value });
-}
-
-export function severityPriorityLabel(value: string, t: TFunction): string {
-  return value ? t(`severityPriority.${value}`, { defaultValue: value }) : value;
+/** A missing severity reads as "Not assessed". */
+export function severityShortLabel(value: string | null | undefined, t: TFunction): string {
+  return value ? t(`severityShort.${value}`, { defaultValue: value }) : t('severityShort.unassessed');
 }
 
 export function statusLabel(value: string, t: TFunction): string {

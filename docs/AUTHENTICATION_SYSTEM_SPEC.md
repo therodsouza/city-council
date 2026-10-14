@@ -548,7 +548,6 @@ const [form, setForm] = useState<FormData>({
   locationNote: "",
   siteType: "",
   category: "",
-  severity: "",
   description: "",
   photoName: "",
   name: user?.name || "",           // ← Auto-fill from user

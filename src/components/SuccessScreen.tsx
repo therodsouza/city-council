@@ -2,13 +2,7 @@ import { useState } from 'react';
 import { CheckCircle2, Copy, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { FormData } from '../types/form';
-import { categoryLabel, severityPriorityLabel, siteTypeLabel } from '../i18n/labels';
-
-const SEVERITY_DOTS: Record<string, string> = {
-  low: 'bg-emerald-500',
-  medium: 'bg-amber-500',
-  high: 'bg-red-500',
-};
+import { categoryLabel, siteTypeLabel } from '../i18n/labels';
 
 interface Props {
   form: FormData;
@@ -101,16 +95,6 @@ export default function SuccessScreen({ form, refNum, isGuest = false, onReset, 
             </div>
             <div className="text-sm font-semibold">
               {categoryLabel(form.category, t)}
-            </div>
-            <div className="flex items-center gap-1.5 mt-1.5">
-              <span
-                className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                  SEVERITY_DOTS[form.severity] ?? 'bg-muted'
-                }`}
-              />
-              <span className="text-sm text-muted-foreground">
-                {severityPriorityLabel(form.severity, t)}
-              </span>
             </div>
           </div>
         </div>

@@ -34,7 +34,6 @@ const EMPTY_FORM: Omit<FormData, 'name' | 'email'> = {
   locationNote: '',
   siteType: '',
   category: '',
-  severity: '',
   description: '',
   phone: '',
   receiveUpdates: true,

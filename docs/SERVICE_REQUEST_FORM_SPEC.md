@@ -270,7 +270,7 @@ className="border-border bg-white text-muted-foreground
 
 ### Step 2: Issue Details
 
-**Priority Order:** Image → Description → Category/Severity
+**Priority Order:** Image → Description → Category
 
 #### Image Capture Zone
 
@@ -326,11 +326,9 @@ className="border-border bg-white text-muted-foreground
 - **Character counter:** Bottom-right, shows green when ≥10 chars
 - **Helper text:** "Be as specific as possible." (bottom-left)
 
-#### Category & Severity (Compact Row)
+#### Category
 
-**Layout:** 2-column grid (sm:grid-cols-2)
-
-**Category Dropdown:**
+**Category Dropdown** (full width):
 - Options:
   - Pothole / Road Damage
   - Graffiti / Vandalism
@@ -341,17 +339,9 @@ className="border-border bg-white text-muted-foreground
   - Illegal Dumping / Litter
   - Other Infrastructure
 
-**Severity Buttons (3-column grid):**
-- Low Priority (green dot)
-- Medium Priority (amber dot)
-- High Priority (red dot)
+**No severity field.** Citizens do not choose a severity: council administrators assess it after submission (see `ADMIN_REQUESTS_SPEC.md`). The submit payload carries no `issue.severity`.
 
-Selected state applies color-coded background + border:
-- Low: border-emerald-400 bg-emerald-50
-- Medium: border-amber-400 bg-amber-50
-- High: border-red-400 bg-red-50
-
-**Validation:** Category, Severity, and Description (≥10 chars) required
+**Validation:** Category and Description (≥10 chars) required
 
 ---
 
@@ -490,7 +480,6 @@ interface FormData {
 
   // Step 2
   category: string;
-  severity: string;
   description: string;
   photoName: string;          // optional
 
@@ -513,7 +502,7 @@ const canProceed = () => {
     return !!(form.address.trim() && form.suburb.trim() && form.siteType);
   
   if (step === 2)
-    return !!(form.category && form.severity && form.description.trim().length >= 10);
+    return !!(form.category && form.description.trim().length >= 10);
   
   if (step === 3)
     return !!(form.name.trim() && form.email.includes("@") && form.email.includes("."));
@@ -638,39 +627,6 @@ const CATEGORIES = [
 ];
 ```
 
-### Severity Levels
-```javascript
-const SEVERITY = [
-  {
-    value: "low",
-    label: "Low Priority",
-    desc: "Minor inconvenience, no immediate safety risk",
-    selectedClass: "border-emerald-400 bg-emerald-50",
-    dotClass: "bg-emerald-500",
-    textClass: "text-emerald-800",
-    idleClass: "border-border bg-white hover:border-emerald-300 hover:bg-emerald-50/50",
-  },
-  {
-    value: "medium",
-    label: "Medium Priority",
-    desc: "Affects public use or presents a moderate hazard",
-    selectedClass: "border-amber-400 bg-amber-50",
-    dotClass: "bg-amber-500",
-    textClass: "text-amber-800",
-    idleClass: "border-border bg-white hover:border-amber-300 hover:bg-amber-50/50",
-  },
-  {
-    value: "high",
-    label: "High Priority",
-    desc: "Urgent safety hazard requiring prompt council action",
-    selectedClass: "border-red-400 bg-red-50",
-    dotClass: "bg-red-500",
-    textClass: "text-red-800",
-    idleClass: "border-border bg-white hover:border-red-300 hover:bg-red-50/50",
-  },
-];
-```
-
 ---
 
 ## Implementation Notes
@@ -717,7 +673,7 @@ src/
 - All inputs have labels
 - Required fields marked with asterisk + aria-required
 - Focus states clearly visible
-- Color not sole indicator (severity uses dots + text)
+- Color not sole indicator (status badges use dots + text)
 - Keyboard navigation supported
 - Semantic HTML (header, main, footer, nav, aside)
 
@@ -795,7 +751,7 @@ This form embodies a **civic institutional aesthetic** with:
 - **Warmth:** Parchment background, editorial serif (Fraunces), amber accents
 - **Clarity:** High contrast, generous whitespace, clear hierarchy
 - **Trust:** Privacy notices, reference numbers, transparent timeline
-- **Accessibility:** Mono labels, color + text severity, clear focus states
+- **Accessibility:** Mono labels, color + text status, clear focus states
 
 The design prioritizes **user confidence** through institutional design patterns while maintaining **approachability** through warm tones and friendly copy.
 

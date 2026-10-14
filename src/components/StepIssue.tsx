@@ -6,30 +6,6 @@ import { FormData } from '../types/form';
 import { FieldLabel, TextArea } from './FormFields';
 import { CATEGORY_KEYS, categoryLabel } from '../i18n/labels';
 
-const SEVERITY = [
-  {
-    value: 'low',
-    selectedClass: 'border-emerald-400 bg-emerald-50',
-    dotClass: 'bg-emerald-500',
-    textClass: 'text-emerald-800',
-    idleClass: 'border-border bg-white hover:border-emerald-300 hover:bg-emerald-50/50',
-  },
-  {
-    value: 'medium',
-    selectedClass: 'border-amber-400 bg-amber-50',
-    dotClass: 'bg-amber-500',
-    textClass: 'text-amber-800',
-    idleClass: 'border-border bg-white hover:border-amber-300 hover:bg-amber-50/50',
-  },
-  {
-    value: 'high',
-    selectedClass: 'border-red-400 bg-red-50',
-    dotClass: 'bg-red-500',
-    textClass: 'text-red-800',
-    idleClass: 'border-border bg-white hover:border-red-300 hover:bg-red-50/50',
-  },
-];
-
 // The API accepts only these photo types, up to 5 MB, and checks the file content.
 const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
@@ -56,7 +32,6 @@ export default function StepIssue({ form, setVal, photoUrl, setPhotoUrl, setPhot
   const canProceed = !!(
     !compressing &&
     form.category &&
-    form.severity &&
     form.description.trim().length >= 10
   );
 
@@ -230,47 +205,20 @@ export default function StepIssue({ form, setVal, photoUrl, setPhotoUrl, setPhot
           </div>
         </div>
 
-        {/* Category & Severity */}
-        <div className="grid sm:grid-cols-2 gap-6">
-          <div>
-            <FieldLabel htmlFor="category" required>{t('stepIssue.category')}</FieldLabel>
-            <select
-              id="category"
-              value={form.category}
-              onChange={e => setVal('category', e.target.value)}
-              className="w-full px-3.5 py-2.5 border border-border bg-white rounded-sm text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-colors"
-            >
-              <option value="">{t('stepIssue.category_placeholder')}</option>
-              {CATEGORY_KEYS.map(c => (
-                <option key={c} value={c}>{categoryLabel(c, t)}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <FieldLabel required>{t('stepIssue.severity')}</FieldLabel>
-            <div className="grid grid-cols-3 gap-2">
-              {SEVERITY.map(s => (
-                <button
-                  key={s.value}
-                  type="button"
-                  onClick={() => setVal('severity', s.value)}
-                  className={`flex items-center gap-1.5 px-3 py-2.5 border rounded-sm transition-colors ${
-                    form.severity === s.value ? s.selectedClass : s.idleClass
-                  }`}
-                >
-                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${s.dotClass}`} />
-                  <span
-                    className={`text-xs font-semibold ${
-                      form.severity === s.value ? s.textClass : 'text-foreground'
-                    }`}
-                  >
-                    {t(`severityShort.${s.value}`)}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
+        {/* Category */}
+        <div>
+          <FieldLabel htmlFor="category" required>{t('stepIssue.category')}</FieldLabel>
+          <select
+            id="category"
+            value={form.category}
+            onChange={e => setVal('category', e.target.value)}
+            className="w-full px-3.5 py-2.5 border border-border bg-white rounded-sm text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-colors"
+          >
+            <option value="">{t('stepIssue.category_placeholder')}</option>
+            {CATEGORY_KEYS.map(c => (
+              <option key={c} value={c}>{categoryLabel(c, t)}</option>
+            ))}
+          </select>
         </div>
       </div>
 

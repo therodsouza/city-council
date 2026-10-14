@@ -1,7 +1,7 @@
 import { FormData as AppFormData } from '../types/form';
 import { authenticationService } from './AuthenticationService';
 import { ApiError, toApiError } from './ApiError';
-import type { Status } from '../components/requestUi';
+import type { Severity, Status } from '../components/requestUi';
 
 export interface ServiceRequestPayload {
   submittedAt: string;
@@ -16,7 +16,6 @@ export interface ServiceRequestPayload {
   };
   issue: {
     category: string;
-    severity: string;
     description: string;
   };
   contact: {
@@ -46,7 +45,6 @@ export function buildServiceRequestPayload(
     },
     issue: {
       category: form.category,
-      severity: form.severity,
       description: form.description,
     },
     contact: {
@@ -75,7 +73,8 @@ export interface ServiceRequestListItem {
   siteType: string;
   locationNotes: string | null;
   category: string;
-  severity: string;
+  /** Set by an administrator. Absent or empty until the request is assessed; read it with `toSeverity`. */
+  severity?: Severity | null;
   issueDescription: string;
   contactName: string;
   contactEmail: string;
@@ -89,7 +88,10 @@ export interface ServiceRequestListItem {
 }
 
 export interface StatusChange {
-  status: Status;
+  /** Present on status entries; severity entries leave it out. */
+  status?: Status;
+  /** Present on severity entries: the severity the admin set. */
+  severity?: Severity;
   changedAt: string;
   changedBySub?: string | null;
   changedByEmail?: string | null;
@@ -249,5 +251,26 @@ export async function updateServiceRequestStatus(
     body: JSON.stringify(trimmed ? { status, note: trimmed } : { status }),
   });
   if (!response.ok) throw await toApiError(response, 'Failed to update status');
+  return await response.json() as ServiceRequestDetail;
+}
+
+/**
+ * Admin only. Sets the severity and appends a history entry; resolves to the updated request.
+ * A severity cannot be cleared once set.
+ */
+export async function updateServiceRequestSeverity(
+  id: string,
+  severity: Severity,
+  note?: string,
+): Promise<ServiceRequestDetail> {
+  if (!API_URL) throw new ApiError(404, 'No API configured');
+
+  const trimmed = note?.trim();
+  const response = await fetch(`${API_URL}/service-requests/${encodeURIComponent(id)}/severity`, {
+    method: 'PATCH',
+    headers: { ...(await authHeaders()), 'Content-Type': 'application/json' },
+    body: JSON.stringify(trimmed ? { severity, note: trimmed } : { severity }),
+  });
+  if (!response.ok) throw await toApiError(response, 'Failed to update severity');
   return await response.json() as ServiceRequestDetail;
 }

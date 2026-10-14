@@ -5,7 +5,9 @@ import { User } from '../contexts/AuthContext';
 import { SiteHeader } from './SiteHeader';
 import { getServiceRequests, ServiceRequestListItem } from '../services/ServiceRequestService';
 import { categoryLabel, severityShortLabel, statusLabel, dateLocale, CATEGORY_KEYS } from '../i18n/labels';
-import { Status, STATUS_ORDER, STATUS_CONFIG, CATEGORY_ICONS, StatusBadge, toStatus } from './requestUi';
+import {
+  Severity, SEVERITY_ORDER, Status, STATUS_ORDER, STATUS_CONFIG, CATEGORY_ICONS, StatusBadge, toSeverity, toStatus,
+} from './requestUi';
 
 interface AdminRequestListProps {
   user: User | null;
@@ -18,7 +20,7 @@ interface Row {
   id: string;
   referenceNumber: string;
   category: string;
-  severity: string;
+  severity: Severity | null;
   status: Status;
   createdAt: Date;
   address: string;
@@ -26,9 +28,7 @@ interface Row {
   contactName: string;
 }
 
-const SEVERITIES = ['high', 'medium', 'low'] as const;
-
-const SEVERITY_TEXT: Record<string, string> = {
+const SEVERITY_TEXT: Record<Severity, string> = {
   high: 'text-red-700',
   medium: 'text-amber-700',
   low: 'text-muted-foreground',
@@ -39,7 +39,7 @@ function toRow(item: ServiceRequestListItem): Row {
     id: item.id,
     referenceNumber: item.referenceNumber,
     category: item.category.toLowerCase(),
-    severity: item.severity?.toLowerCase() ?? '',
+    severity: toSeverity(item.severity),
     status: toStatus(item.status),
     createdAt: new Date(item.createdAt),
     address: item.address,
@@ -74,11 +74,9 @@ function RequestRow({ row, onOpen }: { row: Row; onOpen: () => void }) {
         <div className="flex items-center gap-2 flex-wrap mb-0.5">
           <span className="font-mono text-xs text-muted-foreground">{row.referenceNumber}</span>
           <StatusBadge status={row.status} />
-          {row.severity && (
-            <span className={`text-xs font-mono uppercase tracking-wide ${SEVERITY_TEXT[row.severity] ?? 'text-muted-foreground'}`}>
-              {severityShortLabel(row.severity, t)}
-            </span>
-          )}
+          <span className={`text-xs font-mono uppercase tracking-wide ${row.severity ? SEVERITY_TEXT[row.severity] : 'text-muted-foreground/70'}`}>
+            {severityShortLabel(row.severity, t)}
+          </span>
         </div>
         <div className="text-sm font-medium text-foreground truncate">{categoryLabel(row.category, t)}</div>
         <div className="text-xs text-muted-foreground truncate">
@@ -129,7 +127,7 @@ export function AdminRequestList({ user, onBack, onOpen, onProfileClick }: Admin
           matchSearch &&
           (statusFilter === 'all' || r.status === statusFilter) &&
           (categoryFilter === 'all' || r.category === categoryFilter) &&
-          (severityFilter === 'all' || r.severity === severityFilter)
+          (severityFilter === 'all' || (r.severity ?? 'unassessed') === severityFilter)
         );
       })
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
@@ -216,9 +214,10 @@ export function AdminRequestList({ user, onBack, onOpen, onProfileClick }: Admin
             className={selectClass}
           >
             <option value="all">{t('admin.list.all_severities')}</option>
-            {SEVERITIES.map((s) => (
+            {SEVERITY_ORDER.map((s) => (
               <option key={s} value={s}>{severityShortLabel(s, t)}</option>
             ))}
+            <option value="unassessed">{severityShortLabel(null, t)}</option>
           </select>
           <select
             value={statusFilter}
