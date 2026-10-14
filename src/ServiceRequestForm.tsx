@@ -22,6 +22,7 @@ interface Props {
   onProfileClick?: () => void;
   onTrackClick?: () => void;
   onMapClick?: () => void;
+  onManageClick?: () => void;
   /** Guest mode (no user): lets the header offer signing in. */
   onSignInClick?: () => void;
 }
@@ -40,7 +41,7 @@ const EMPTY_FORM: Omit<FormData, 'name' | 'email'> = {
   agreeTerms: false,
 };
 
-export function ServiceRequestForm({ user, onProfileClick, onTrackClick, onMapClick, onSignInClick }: Props) {
+export function ServiceRequestForm({ user, onProfileClick, onTrackClick, onMapClick, onManageClick, onSignInClick }: Props) {
   const { t } = useTranslation();
   const isGuest = !user;
   const [step, setStep] = useState<Step>(1);
@@ -88,6 +89,7 @@ export function ServiceRequestForm({ user, onProfileClick, onTrackClick, onMapCl
         onProfileClick={onProfileClick}
         onTrackClick={onTrackClick}
         onMapClick={onMapClick}
+        onManageClick={onManageClick}
         onSignInClick={onSignInClick}
       />
 

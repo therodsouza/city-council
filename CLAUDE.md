@@ -3,7 +3,8 @@
 City Council service-request portal — a React 19 + Vite SPA (TypeScript, Tailwind
 v4, React Router). Users sign in with Google (OAuth implicit flow → Cognito
 Identity Pool), submit infrastructure service requests, track them, and admins
-view a request map. Visitors without an account can also submit by verifying a
+view a request map and manage requests (list, detail and status changes at
+`/admin/requests`; see `docs/ADMIN_REQUESTS_SPEC.md`). Visitors without an account can also submit by verifying a
 Brazilian mobile number by SMS (Cloudflare Turnstile, then
 `/anonymous/service-requests`; see `docs/ANONYMOUS_SUBMISSION_SPEC.md`). UI is
 internationalised with i18next (English + Brazilian Portuguese); see

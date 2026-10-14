@@ -1,15 +1,11 @@
 import { useState, useEffect } from 'react';
-import {
-  ArrowLeft, Search, ChevronRight, RefreshCw,
-  HardHat, Paintbrush, Wrench, Droplets, Zap, Leaf, Trash2, Building2,
-} from 'lucide-react';
+import { ArrowLeft, Search, ChevronRight, RefreshCw, Building2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { User } from '../contexts/AuthContext';
 import { SiteHeader } from './SiteHeader';
 import { getServiceRequests, ServiceRequestListItem } from '../services/ServiceRequestService';
 import { categoryLabel, statusLabel, dateLocale } from '../i18n/labels';
-
-type Status = 'received' | 'under_review' | 'in_progress' | 'resolved' | 'closed';
+import { Status, STATUS_ORDER, STATUS_CONFIG, CATEGORY_ICONS, StatusBadge, toStatus } from './requestUi';
 
 interface Request {
   referenceNumber: string;
@@ -26,55 +22,17 @@ interface TrackRequestsProps {
   onProfileClick: () => void;
 }
 
-const STATUS_ORDER: Status[] = ['received', 'under_review', 'in_progress', 'resolved', 'closed'];
-
-const STATUS_CONFIG: Record<Status, {
-  dot: string;
-  pill: string;
-  text: string;
-}> = {
-  received:     { dot: 'bg-sky-400',     pill: 'bg-sky-50 border border-sky-200',     text: 'text-sky-800' },
-  under_review: { dot: 'bg-violet-400',  pill: 'bg-violet-50 border border-violet-200', text: 'text-violet-800' },
-  in_progress:  { dot: 'bg-amber-400',   pill: 'bg-amber-50 border border-amber-200',  text: 'text-amber-800' },
-  resolved:     { dot: 'bg-emerald-500', pill: 'bg-emerald-50 border border-emerald-200', text: 'text-emerald-800' },
-  closed:       { dot: 'bg-neutral-400', pill: 'bg-neutral-100 border border-neutral-200', text: 'text-neutral-600' },
-};
-
 const STRIP_STATUSES: Status[] = ['received', 'under_review', 'in_progress', 'resolved'];
 
-const CATEGORY_ICONS: Record<string, React.ElementType> = {
-  pothole:  HardHat,
-  graffiti: Paintbrush,
-  broken:   Wrench,
-  flooding: Droplets,
-  lighting: Zap,
-  trees:    Leaf,
-  dumping:  Trash2,
-  other:    Building2,
-};
-
 function toRequest(item: ServiceRequestListItem): Request {
-  const category = item.category.toLowerCase();
-  const status = (item.status?.toLowerCase() ?? 'received') as Status;
   return {
     referenceNumber: item.referenceNumber,
-    category,
-    status,
+    category: item.category.toLowerCase(),
+    status: toStatus(item.status),
     createdAt: new Date(item.createdAt),
     address: item.address,
     suburb: item.suburb,
   };
-}
-
-function StatusBadge({ status }: { status: Status }) {
-  const { t } = useTranslation();
-  const cfg = STATUS_CONFIG[status];
-  return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-xs font-mono ${cfg.pill} ${cfg.text}`}>
-      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${cfg.dot}`} />
-      {statusLabel(status, t)}
-    </span>
-  );
 }
 
 function RequestRow({ request }: { request: Request }) {

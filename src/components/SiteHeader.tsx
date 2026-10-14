@@ -1,4 +1,4 @@
-import { Wrench, Map } from 'lucide-react';
+import { Wrench, Map, ClipboardList } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { User } from '../contexts/AuthContext';
 import { dateLocale } from '../i18n/labels';
@@ -8,12 +8,14 @@ interface Props {
   onProfileClick?: () => void;
   onTrackClick?: () => void;
   onMapClick?: () => void;
+  /** Admin-only: opens the list where requests are reviewed and their status changed. */
+  onManageClick?: () => void;
   /** Shown when there is no signed-in user, so a guest can switch to signing in. */
   onSignInClick?: () => void;
   adminLabel?: boolean;
 }
 
-export function SiteHeader({ user, onProfileClick, onTrackClick, onMapClick, onSignInClick, adminLabel }: Props) {
+export function SiteHeader({ user, onProfileClick, onTrackClick, onMapClick, onManageClick, onSignInClick, adminLabel }: Props) {
   const { t, i18n } = useTranslation();
   const date = new Date().toLocaleDateString(dateLocale(i18n.language), {
     day: 'numeric',
@@ -51,6 +53,17 @@ export function SiteHeader({ user, onProfileClick, onTrackClick, onMapClick, onS
               className="inline-flex px-3 py-2.5 rounded-sm bg-primary-foreground/10 hover:bg-primary-foreground/20 border border-primary-foreground/20 text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors"
             >
               {t('header.track_requests')}
+            </button>
+          )}
+          {onManageClick && (
+            <button
+              type="button"
+              onClick={onManageClick}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-sm bg-accent/80 hover:bg-accent transition-colors border border-accent text-sm text-white"
+              title={t('header.manage_requests_title')}
+            >
+              <ClipboardList className="w-4 h-4" />
+              {t('header.manage_requests')}
             </button>
           )}
           {onMapClick && (

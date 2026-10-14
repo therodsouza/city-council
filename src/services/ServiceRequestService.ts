@@ -1,6 +1,7 @@
 import { FormData as AppFormData } from '../types/form';
 import { authenticationService } from './AuthenticationService';
-import { toApiError } from './ApiError';
+import { ApiError, toApiError } from './ApiError';
+import type { Status } from '../components/requestUi';
 
 export interface ServiceRequestPayload {
   submittedAt: string;
@@ -63,7 +64,9 @@ export interface ServiceRequestListItem {
   referenceNumber: string;
   submittedAt: string;
   createdAt: string;
-  status?: string;
+  /** Absent on responses from API versions that predate statuses; read it with `toStatus`. */
+  status?: Status;
+  updatedAt?: string | null;
   address: string;
   suburb: string;
   postcode: string;
@@ -76,9 +79,29 @@ export interface ServiceRequestListItem {
   issueDescription: string;
   contactName: string;
   contactEmail: string;
+  contactPhone?: string | null;
+  /** Verified mobile number of an anonymous submitter; visible to administrators only. */
+  ownerPhone?: string | null;
+  submittedBy?: 'user' | 'anonymous' | null;
   receiveUpdates: boolean;
   imagePath: string | null;
   geohash?: string;
+}
+
+export interface StatusChange {
+  status: Status;
+  changedAt: string;
+  changedBySub?: string | null;
+  changedByEmail?: string | null;
+  note?: string | null;
+}
+
+/** One request in full, as returned by `GET /service-requests/{id}`. */
+export interface ServiceRequestDetail extends ServiceRequestListItem {
+  /** Temporary link to the photo (15 minutes); absent when there is no photo. */
+  imageUrl?: string | null;
+  /** Oldest first. */
+  statusHistory?: StatusChange[] | null;
 }
 
 const API_URL = import.meta.env.VITE_API_URL as string | undefined;
@@ -190,4 +213,41 @@ export async function getServiceRequests(): Promise<ServiceRequestListItem[]> {
   }
 
   return requests;
+}
+
+async function authHeaders(): Promise<Record<string, string>> {
+  const idToken = await authenticationService.getIdToken();
+  return idToken ? { Authorization: `Bearer ${idToken}` } : {};
+}
+
+/** One request in full. Throws ApiError; `status` 404 means it does not exist or is not visible to the caller. */
+export async function getServiceRequest(id: string): Promise<ServiceRequestDetail> {
+  if (!API_URL) throw new ApiError(404, 'No API configured');
+
+  const response = await fetch(`${API_URL}/service-requests/${encodeURIComponent(id)}`, {
+    headers: await authHeaders(),
+  });
+  if (!response.ok) throw await toApiError(response, 'Failed to load request');
+  return await response.json() as ServiceRequestDetail;
+}
+
+/**
+ * Admin only. Sets the status and appends a history entry; resolves to the updated request.
+ * Sending the current status is accepted by the API only with a note.
+ */
+export async function updateServiceRequestStatus(
+  id: string,
+  status: Status,
+  note?: string,
+): Promise<ServiceRequestDetail> {
+  if (!API_URL) throw new ApiError(404, 'No API configured');
+
+  const trimmed = note?.trim();
+  const response = await fetch(`${API_URL}/service-requests/${encodeURIComponent(id)}/status`, {
+    method: 'PATCH',
+    headers: { ...(await authHeaders()), 'Content-Type': 'application/json' },
+    body: JSON.stringify(trimmed ? { status, note: trimmed } : { status }),
+  });
+  if (!response.ok) throw await toApiError(response, 'Failed to update status');
+  return await response.json() as ServiceRequestDetail;
 }

@@ -1,8 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import {
-  ArrowLeft, HardHat, Paintbrush, Wrench, Droplets,
-  Zap, Leaf, Trash2, Building2, X, Layers, Filter, RefreshCw,
-} from 'lucide-react';
+import { ArrowLeft, Building2, X, Layers, Filter, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { GoogleMap, MarkerF, useJsApiLoader } from '@react-google-maps/api';
 import { User } from '../contexts/AuthContext';
@@ -10,10 +7,10 @@ import { SiteHeader } from './SiteHeader';
 import { categoryLabel, statusLabel, dateLocale } from '../i18n/labels';
 import { getServiceRequests } from '../services/ServiceRequestService';
 import type { ServiceRequestListItem } from '../services/ServiceRequestService';
-
-type Status = 'received' | 'under_review' | 'in_progress' | 'resolved' | 'closed';
+import { Status, STATUS_ORDER, STATUS_CONFIG, CATEGORY_ICONS, StatusBadge, toStatus } from './requestUi';
 
 interface MapRequest {
+  id: string;
   referenceNumber: string;
   category: string;
   status: Status;
@@ -28,42 +25,18 @@ interface RequestMapProps {
   user: User | null;
   onBack: () => void;
   onProfileClick: () => void;
+  /** Opens the admin detail page of a request (where its status can be changed). */
+  onOpenRequest?: (id: string) => void;
 }
-
-const STATUS_ORDER: Status[] = ['received', 'under_review', 'in_progress', 'resolved', 'closed'];
-
-const STATUS_CONFIG: Record<Status, {
-  dot: string;
-  pill: string;
-  text: string;
-  pin: string;
-  hex: string;
-}> = {
-  received:     { dot: 'bg-sky-400',     pill: 'bg-sky-50 border border-sky-200',         text: 'text-sky-800',     pin: 'bg-sky-500',     hex: '#38bdf8' },
-  under_review: { dot: 'bg-violet-400',  pill: 'bg-violet-50 border border-violet-200',   text: 'text-violet-800',  pin: 'bg-violet-500',  hex: '#a78bfa' },
-  in_progress:  { dot: 'bg-amber-400',   pill: 'bg-amber-50 border border-amber-200',     text: 'text-amber-800',   pin: 'bg-amber-500',   hex: '#fbbf24' },
-  resolved:     { dot: 'bg-emerald-500', pill: 'bg-emerald-50 border border-emerald-200', text: 'text-emerald-800', pin: 'bg-emerald-500', hex: '#10b981' },
-  closed:       { dot: 'bg-neutral-400', pill: 'bg-neutral-100 border border-neutral-200', text: 'text-neutral-600', pin: 'bg-neutral-400', hex: '#a3a3a3' },
-};
 
 const ACTIVE_STATUSES: Status[] = ['received', 'under_review', 'in_progress', 'resolved'];
 
-const CATEGORY_ICONS: Record<string, React.ElementType> = {
-  pothole:  HardHat,
-  graffiti: Paintbrush,
-  broken:   Wrench,
-  flooding: Droplets,
-  lighting: Zap,
-  trees:    Leaf,
-  dumping:  Trash2,
-  other:    Building2,
-};
-
 function toMapRequest(item: ServiceRequestListItem): MapRequest {
   return {
+    id: item.id,
     referenceNumber: item.referenceNumber,
     category: item.category.toLowerCase(),
-    status: (item.status?.toLowerCase() ?? 'received') as Status,
+    status: toStatus(item.status),
     createdAt: new Date(item.createdAt),
     address: item.address,
     suburb: item.suburb,
@@ -81,18 +54,7 @@ function markerIcon(hex: string): google.maps.Icon {
   };
 }
 
-function StatusDot({ status }: { status: Status }) {
-  const { t } = useTranslation();
-  const { dot, pill, text } = STATUS_CONFIG[status];
-  return (
-    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm text-xs font-mono border ${pill} ${text}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
-      {statusLabel(status, t)}
-    </span>
-  );
-}
-
-function DetailPanel({ req, onClose }: { req: MapRequest; onClose: () => void }) {
+function DetailPanel({ req, onClose, onOpen }: { req: MapRequest; onClose: () => void; onOpen?: () => void }) {
   const { t, i18n } = useTranslation();
   const Icon = CATEGORY_ICONS[req.category] ?? Building2;
   return (
@@ -127,8 +89,17 @@ function DetailPanel({ req, onClose }: { req: MapRequest; onClose: () => void })
               {req.createdAt.toLocaleDateString(dateLocale(i18n.language), { day: 'numeric', month: 'short', year: 'numeric' })}
             </div>
           </div>
-          <StatusDot status={req.status} />
+          <StatusBadge status={req.status} compact />
         </div>
+        {onOpen && (
+          <button
+            type="button"
+            onClick={onOpen}
+            className="w-full px-3 py-1.5 rounded-sm border border-border text-xs text-foreground hover:bg-muted/50 transition-colors"
+          >
+            {t('map.open_details')}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -154,7 +125,7 @@ function Legend({ requests }: { requests: MapRequest[] }) {
   );
 }
 
-export function RequestMap({ user, onBack, onProfileClick }: RequestMapProps) {
+export function RequestMap({ user, onBack, onProfileClick, onOpenRequest }: RequestMapProps) {
   const { t } = useTranslation();
   const [statusFilter, setStatusFilter] = useState<Status | 'all'>('all');
   const [selected, setSelected] = useState<MapRequest | null>(null);
@@ -298,7 +269,13 @@ export function RequestMap({ user, onBack, onProfileClick }: RequestMapProps) {
               ))}
             </GoogleMap>
 
-            {selected && <DetailPanel req={selected} onClose={() => setSelected(null)} />}
+            {selected && (
+              <DetailPanel
+                req={selected}
+                onClose={() => setSelected(null)}
+                onOpen={onOpenRequest ? () => onOpenRequest(selected.id) : undefined}
+              />
+            )}
             {showLegend && <Legend requests={requests} />}
           </>
         )}
