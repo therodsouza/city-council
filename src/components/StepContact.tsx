@@ -2,6 +2,7 @@ import { ArrowLeft, ArrowRight, Mail, Phone, Shield } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { FormData } from '../types/form';
 import { FieldLabel, TextInput } from './FormFields';
+import { guestVerificationChannel } from '../config/features';
 
 interface Props {
   form: FormData;
@@ -33,7 +34,7 @@ export default function StepContact({ form, setVal, isGuest = false, onNext, onB
         <div className="flex items-start gap-3 p-4 border border-border bg-secondary/40 rounded-sm">
           <Shield className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
           <p className="text-sm text-muted-foreground">
-            {isGuest ? t('stepContact.privacy_guest') : t('stepContact.privacy')}
+            {isGuest ? t(`stepContact.privacy_guest_${guestVerificationChannel}`) : t('stepContact.privacy')}
           </p>
         </div>
 

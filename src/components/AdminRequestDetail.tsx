@@ -415,11 +415,17 @@ export function AdminRequestDetail({ id, user, onBack, onProfileClick }: AdminRe
                     </a>
                   ) : '—'}
                 </Field>
-                {request.ownerPhone && (
-                  <Field label={t('admin.detail.verified_phone')}>{request.ownerPhone}</Field>
+                {request.verifiedContact ? (
+                  <Field label={t(`admin.detail.verified_${request.verifiedContact.channel}`)}>
+                    {request.verifiedContact.value}
+                  </Field>
+                ) : request.ownerPhone && (
+                  <Field label={t('admin.detail.verified_sms')}>{request.ownerPhone}</Field>
                 )}
                 <Field label={t('admin.detail.submitted_by')}>
-                  {request.submittedBy === 'anonymous' ? t('admin.detail.anonymous') : t('admin.detail.account')}
+                  {request.submittedBy === 'anonymous'
+                    ? t(request.verifiedContact?.channel === 'email' ? 'admin.detail.anonymous_email' : 'admin.detail.anonymous')
+                    : t('admin.detail.account')}
                 </Field>
                 <Field label={t('admin.detail.wants_updates')}>
                   {request.receiveUpdates ? t('admin.detail.yes') : t('admin.detail.no')}

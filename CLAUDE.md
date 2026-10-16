@@ -5,7 +5,8 @@ v4, React Router). Users sign in with Google (OAuth implicit flow → Cognito
 Identity Pool), submit infrastructure service requests, track them, and admins
 view a request map and manage requests (list, detail and status changes at
 `/admin/requests`; see `docs/ADMIN_REQUESTS_SPEC.md`). Visitors without an account can also submit by verifying a
-Brazilian mobile number by SMS (Cloudflare Turnstile, then
+Brazilian mobile number by SMS or an email address (chosen by the
+`VITE_GUEST_VERIFICATION` flag; Cloudflare Turnstile, then
 `/anonymous/service-requests`; see `docs/ANONYMOUS_SUBMISSION_SPEC.md`). UI is
 internationalised with i18next (English + Brazilian Portuguese); see
 `docs/I18N_SPEC.md`.
@@ -44,7 +45,9 @@ npm run deploy        # runs scripts/deploy.sh
 - App runtime config (`VITE_*` in `.env`) is baked into the bundle at build time,
   so make sure `.env` is correct **before** deploying. That includes
   `VITE_TURNSTILE_SITE_KEY` (the public Turnstile site key): without it guests
-  cannot request an SMS code.
+  cannot request a code. `VITE_GUEST_VERIFICATION` (`sms` default, `email`, `off`)
+  picks how guests receive that code, so changing it needs a redeploy; the API
+  must have the same channel enabled.
 
 ### What the deploy does (`scripts/deploy.sh`)
 

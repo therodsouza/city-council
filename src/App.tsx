@@ -7,6 +7,7 @@ import { Profile } from './components/Profile';
 import { TrackRequests } from './components/TrackRequests';
 import { AuthCallback } from './components/AuthCallback';
 import { ServiceRequestForm } from './ServiceRequestForm';
+import { guestsAllowed } from './config/features';
 import { RequestMap } from './components/RequestMap';
 import { AdminRequestList } from './components/AdminRequestList';
 import { AdminRequestDetail } from './components/AdminRequestDetail';
@@ -26,7 +27,7 @@ function AppShell() {
 
   if (isLoading) return null;
   if (!isAuthenticated) {
-    if (!guest) return <Login onContinueAsGuest={() => setGuest(true)} />;
+    if (!guest) return <Login onContinueAsGuest={guestsAllowed ? () => setGuest(true) : undefined} />;
     return <ServiceRequestForm user={null} onSignInClick={() => setGuest(false)} />;
   }
   if (!user?.profileComplete) return <OnboardingForm />;

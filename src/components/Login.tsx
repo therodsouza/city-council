@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Wrench, CheckCircle2, Shield, Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import { guestVerificationChannel } from '../config/features';
 
 const GoogleLogo = () => (
   <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -91,7 +92,7 @@ export function Login({ onContinueAsGuest }: Props) {
                 >
                   {t('login.continue_guest')}
                 </button>
-                <p className="text-xs text-muted-foreground mt-1">{t('login.continue_guest_desc')}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t(`login.continue_guest_desc_${guestVerificationChannel}`)}</p>
               </div>
             )}
 

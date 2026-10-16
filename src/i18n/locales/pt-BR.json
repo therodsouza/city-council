@@ -96,7 +96,8 @@
     "benefit3_title": "Seguro e Privado",
     "benefit3_desc": "Suas informações são criptografadas e nunca compartilhadas com terceiros",
     "continue_guest": "Continuar sem conta",
-    "continue_guest_desc": "Registre um problema agora e confirme seu celular por SMS."
+    "continue_guest_desc_sms": "Registre um problema agora e confirme seu celular por SMS.",
+    "continue_guest_desc_email": "Registre um problema agora e confirme seu e-mail."
   },
   "authCallback": {
     "google_returned": "O Google retornou: {{error}}",
@@ -237,7 +238,8 @@
     "phone_placeholder": "ex.: (11) 91234-5678",
     "updates_label": "Receber atualizações de status por e-mail",
     "updates_sub": "Avisaremos você quando sua solicitação for avaliada e resolvida.",
-    "privacy_guest": "Seus dados são coletados apenas para processar esta solicitação. O celular verificado é armazenado com a solicitação e visível somente para os administradores da prefeitura."
+    "privacy_guest_sms": "Seus dados são coletados apenas para processar esta solicitação. O celular verificado é armazenado com a solicitação e visível somente para os administradores da prefeitura.",
+    "privacy_guest_email": "Seus dados são coletados apenas para processar esta solicitação. O e-mail verificado é armazenado com a solicitação e visível somente para os administradores da prefeitura."
   },
   "stepReview": {
     "title": "Revisar e Enviar",
@@ -358,7 +360,6 @@
       "name": "Nome",
       "email": "E-mail",
       "phone": "Telefone",
-      "verified_phone": "Celular verificado",
       "submitted_by": "Envio",
       "anonymous": "Sem conta (celular verificado)",
       "account": "Com conta",
@@ -372,36 +373,55 @@
       "severity_hint": "Definida pela equipe da prefeitura após analisar a solicitação.",
       "severity_saved": "Gravidade atualizada.",
       "severity_save_error": "Não foi possível atualizar a gravidade. Tente novamente.",
-      "history_severity": "Gravidade definida como {{severity}}"
+      "history_severity": "Gravidade definida como {{severity}}",
+      "verified_sms": "Celular verificado",
+      "verified_email": "E-mail verificado",
+      "anonymous_email": "Sem conta (e-mail verificado)"
     }
   },
   "anon": {
-    "verify_title": "Verifique seu celular",
-    "verify_desc": "Enviaremos um código de 6 dígitos por SMS para confirmar que esta solicitação vem de uma pessoa real. Apenas celulares brasileiros.",
-    "phone_label": "Número de celular",
-    "phone_placeholder": "(11) 91234-5678",
+    "sms": {
+      "verify_title": "Verifique seu celular",
+      "verify_desc": "Enviaremos um código de 6 dígitos por SMS para confirmar que esta solicitação vem de uma pessoa real. Apenas celulares brasileiros.",
+      "contact_label": "Número de celular",
+      "contact_placeholder": "(11) 91234-5678",
+      "code_hint": "Digite o código de 6 dígitos enviado para {{contact}}.",
+      "resend": "Enviar novo código ou trocar o número",
+      "verified_title": "Celular verificado",
+      "change": "Alterar",
+      "err_contact_invalid": "Informe um celular brasileiro com DDD, por exemplo (11) 91234-5678.",
+      "err_send_failed": "Não foi possível enviar o código. Tente novamente em instantes.",
+      "err_verification_expired": "A verificação do celular expirou. Verifique seu número novamente.",
+      "err_daily_limit": "Este número atingiu o limite diário de solicitações. Tente novamente amanhã."
+    },
+    "email": {
+      "verify_title": "Verifique seu e-mail",
+      "verify_desc": "Enviaremos um código de 6 dígitos por e-mail para confirmar que esta solicitação vem de uma pessoa real.",
+      "contact_label": "Endereço de e-mail",
+      "contact_placeholder": "nome@exemplo.com",
+      "code_hint": "Digite o código de 6 dígitos enviado para {{contact}}.",
+      "resend": "Enviar novo código ou trocar o e-mail",
+      "verified_title": "E-mail verificado",
+      "change": "Alterar",
+      "err_contact_invalid": "Informe um e-mail válido, por exemplo nome@exemplo.com.",
+      "err_send_failed": "Não foi possível enviar o e-mail. Tente novamente em instantes.",
+      "err_verification_expired": "A verificação do e-mail expirou. Verifique seu e-mail novamente.",
+      "err_daily_limit": "Este e-mail atingiu o limite diário de solicitações. Tente novamente amanhã."
+    },
     "send_code": "Enviar código",
     "sending": "Enviando…",
     "code_label": "Código de verificação",
-    "code_hint": "Digite o código de 6 dígitos enviado para {{phone}}.",
     "dev_code_hint": "Modo de desenvolvimento: use o código {{code}}.",
     "verify": "Verificar",
     "verifying": "Verificando…",
-    "resend": "Enviar novo código ou trocar o número",
-    "verified_title": "Celular verificado",
-    "change_number": "Alterar",
-    "err_phone_invalid": "Informe um celular brasileiro com DDD, por exemplo (11) 91234-5678.",
     "err_captcha": "A verificação de segurança falhou. Tente novamente.",
     "err_captcha_unconfigured": "A verificação de segurança não está configurada. Tente novamente mais tarde.",
     "err_too_many": "Muitas tentativas. Tente novamente mais tarde.",
-    "err_sms_failed": "Não foi possível enviar o código. Tente novamente em instantes.",
     "err_code_invalid": "Código inválido ou expirado. Confira os dígitos ou peça um novo código.",
     "err_generic": "Algo deu errado. Tente novamente.",
-    "err_verification_expired": "A verificação do celular expirou. Verifique seu número novamente.",
     "err_request_invalid": "Não foi possível aceitar a solicitação. Revise seus dados e tente novamente.",
     "err_photo_invalid": "Não foi possível aceitar a foto. Use uma imagem JPEG, PNG ou WebP.",
-    "err_photo_too_large": "A foto é grande demais (máximo de 5 MB). Remova-a ou escolha uma menor.",
-    "err_daily_limit": "Este número atingiu o limite diário de solicitações. Tente novamente amanhã."
+    "err_photo_too_large": "A foto é grande demais (máximo de 5 MB). Remova-a ou escolha uma menor."
   },
   "cep": {
     "hint": "Preenche rua e bairro. Somente o CEP é enviado a um serviço público de consulta de CEP.",

@@ -424,6 +424,46 @@ Content-Type: application/json
 
 ---
 
+### 7a. Email verification code (public, alternative to sections 6 and 7)
+
+> **Status: proposed. Not implemented in the API yet.** The frontend switches channel with `VITE_GUEST_VERIFICATION=sms|email|off` (see `docs/ANONYMOUS_SUBMISSION_SPEC.md`). Only one channel is active at a time.
+
+Same two steps as sections 6 and 7, with an email address instead of a phone number. **No `Authorization` header.** The result is the same kind of token, accepted by section 8.
+
+```
+POST /verification/email/send
+{ "email": "jane@example.com", "captchaToken": "<Turnstile token>", "locale": "pt-BR" }
+```
+
+| Field          | Description |
+|----------------|-------------|
+| `email`        | A valid email address (up to 254 characters). Normalise with trim and lower-case before use. |
+| `captchaToken` | As in section 6; works once. |
+| `locale`       | Optional, `en` or `pt-BR`. Language of the email. Default `en`. |
+
+Success: `202 Accepted`, no body. The code is valid for 10 minutes; sending again replaces it.
+
+| Status | `message`                                     | When |
+|--------|-----------------------------------------------|------|
+| `400`  | `Enter a valid email address`                 | `email` is missing or invalid |
+| `400`  | `Captcha verification failed`                 | As in section 6 |
+| `403`  | none guaranteed                               | The email channel is disabled on the server |
+| `429`  | `Too many attempts, try again later`          | Rate limit: per address, per IP, or per day for the whole service |
+| `502`  | `Could not send the code, try again later`    | The email provider failed. The code is discarded |
+
+```
+POST /verification/email/confirm
+{ "email": "jane@example.com", "code": "483920" }
+```
+
+Success: `200 OK` with `{ "token": "q3Zk…", "expiresInSeconds": 900 }`, identical to section 7. Error: `400 Invalid or expired code`, with the same 5-attempt lockout.
+
+**Server enforcement.** The API should accept only the channel(s) it has enabled and answer `403` for the other, so the frontend flag cannot be bypassed by calling the endpoint directly.
+
+**Effect on section 8.** The token records the channel and the verified contact. The request is stored against that contact (the verified email replaces the "verified phone" described below). `contact.email` should then match the verified email or be ignored. Administrator responses (sections 9 and 10) expose it as `verifiedContact: { "channel": "sms" | "email", "value": "…" }`; `ownerPhone` remains for phone-verified requests.
+
+---
+
 ### 8. Submit Service Request Anonymously (public)
 
 Creates a service request without an account, using the token from section 7. **No `Authorization` header.**

@@ -1,5 +1,6 @@
 import type { TFunction } from 'i18next';
 import { ApiError } from '../services/ApiError';
+import type { GuestVerificationChannel } from '../config/features';
 
 /**
  * Maps failures of the public verification / anonymous-submission endpoints to
@@ -8,13 +9,13 @@ import { ApiError } from '../services/ApiError';
  * share a status, on the documented message prefix) instead of showing it.
  */
 
-export function sendCodeErrorMessage(e: unknown, t: TFunction): string {
+export function sendCodeErrorMessage(e: unknown, t: TFunction, channel: GuestVerificationChannel): string {
   if (e instanceof ApiError) {
     if (e.status === 400) {
-      return /captcha/i.test(e.message) ? t('anon.err_captcha') : t('anon.err_phone_invalid');
+      return /captcha/i.test(e.message) ? t('anon.err_captcha') : t(`anon.${channel}.err_contact_invalid`);
     }
     if (e.status === 429) return t('anon.err_too_many');
-    if (e.status === 502) return t('anon.err_sms_failed');
+    if (e.status === 502) return t(`anon.${channel}.err_send_failed`);
   }
   return t('anon.err_generic');
 }
@@ -24,14 +25,14 @@ export function confirmCodeErrorMessage(e: unknown, t: TFunction): string {
   return t('anon.err_generic');
 }
 
-export function anonymousSubmitErrorMessage(e: unknown, t: TFunction): string {
+export function anonymousSubmitErrorMessage(e: unknown, t: TFunction, channel: GuestVerificationChannel): string {
   if (e instanceof ApiError) {
     switch (e.status) {
       case 400:
         return /^photo/i.test(e.message) ? t('anon.err_photo_invalid') : t('anon.err_request_invalid');
-      case 401: return t('anon.err_verification_expired');
+      case 401: return t(`anon.${channel}.err_verification_expired`);
       case 413: return t('anon.err_photo_too_large');
-      case 429: return t('anon.err_daily_limit');
+      case 429: return t(`anon.${channel}.err_daily_limit`);
     }
   }
   return t('common.submit_failed');

@@ -96,7 +96,8 @@
     "benefit3_title": "Secure & Private",
     "benefit3_desc": "Your information is encrypted and never shared with third parties",
     "continue_guest": "Continue without an account",
-    "continue_guest_desc": "Report an issue now and confirm your phone number by SMS instead."
+    "continue_guest_desc_sms": "Report an issue now and confirm your phone number by SMS instead.",
+    "continue_guest_desc_email": "Report an issue now and confirm your email address instead."
   },
   "authCallback": {
     "google_returned": "Google returned: {{error}}",
@@ -237,7 +238,8 @@
     "phone_placeholder": "e.g. (11) 91234-5678",
     "updates_label": "Receive status updates by email",
     "updates_sub": "We will notify you when your request is assessed and resolved.",
-    "privacy_guest": "Your details are collected solely to process this service request. The mobile number you verify is stored with the request and is visible to council administrators only."
+    "privacy_guest_sms": "Your details are collected solely to process this service request. The mobile number you verify is stored with the request and is visible to council administrators only.",
+    "privacy_guest_email": "Your details are collected solely to process this service request. The email address you verify is stored with the request and is visible to council administrators only."
   },
   "stepReview": {
     "title": "Review & Submit",
@@ -358,7 +360,6 @@
       "name": "Name",
       "email": "Email",
       "phone": "Phone",
-      "verified_phone": "Verified mobile",
       "submitted_by": "Submitted",
       "anonymous": "Without an account (phone verified)",
       "account": "With an account",
@@ -372,36 +373,55 @@
       "severity_hint": "Set by the council team after reviewing the request.",
       "severity_saved": "Severity updated.",
       "severity_save_error": "Could not update the severity. Please try again.",
-      "history_severity": "Severity set to {{severity}}"
+      "history_severity": "Severity set to {{severity}}",
+      "verified_sms": "Verified mobile",
+      "verified_email": "Verified email",
+      "anonymous_email": "No account (email verified)"
     }
   },
   "anon": {
-    "verify_title": "Verify your mobile number",
-    "verify_desc": "We will text you a 6-digit code to confirm this request comes from a real person. Brazilian mobile numbers only.",
-    "phone_label": "Mobile number",
-    "phone_placeholder": "(11) 91234-5678",
+    "sms": {
+      "verify_title": "Verify your mobile number",
+      "verify_desc": "We will text you a 6-digit code to confirm this request comes from a real person. Brazilian mobile numbers only.",
+      "contact_label": "Mobile number",
+      "contact_placeholder": "(11) 91234-5678",
+      "code_hint": "Enter the 6-digit code we sent to {{contact}}.",
+      "resend": "Send a new code or change number",
+      "verified_title": "Mobile number verified",
+      "change": "Change",
+      "err_contact_invalid": "Enter a Brazilian mobile number with area code, e.g. (11) 91234-5678.",
+      "err_send_failed": "We could not send the code. Please try again in a moment.",
+      "err_verification_expired": "Phone verification has expired. Please verify your number again.",
+      "err_daily_limit": "This number has reached the daily limit for requests. Please try again tomorrow."
+    },
+    "email": {
+      "verify_title": "Verify your email address",
+      "verify_desc": "We will email you a 6-digit code to confirm this request comes from a real person.",
+      "contact_label": "Email address",
+      "contact_placeholder": "name@example.com",
+      "code_hint": "Enter the 6-digit code we emailed to {{contact}}.",
+      "resend": "Send a new code or change email",
+      "verified_title": "Email address verified",
+      "change": "Change",
+      "err_contact_invalid": "Enter a valid email address, e.g. name@example.com.",
+      "err_send_failed": "We could not send the email. Please try again in a moment.",
+      "err_verification_expired": "Email verification has expired. Please verify your email address again.",
+      "err_daily_limit": "This email address has reached the daily limit for requests. Please try again tomorrow."
+    },
     "send_code": "Send code",
     "sending": "Sending…",
     "code_label": "Verification code",
-    "code_hint": "Enter the 6-digit code we sent to {{phone}}.",
     "dev_code_hint": "Development mode: use code {{code}}.",
     "verify": "Verify",
     "verifying": "Verifying…",
-    "resend": "Send a new code or change number",
-    "verified_title": "Mobile number verified",
-    "change_number": "Change",
-    "err_phone_invalid": "Enter a Brazilian mobile number with area code, e.g. (11) 91234-5678.",
     "err_captcha": "The security check failed. Please try again.",
     "err_captcha_unconfigured": "The security check is not configured. Please try again later.",
     "err_too_many": "Too many attempts. Please try again later.",
-    "err_sms_failed": "We could not send the code. Please try again in a moment.",
     "err_code_invalid": "That code is invalid or has expired. Check the digits or request a new code.",
     "err_generic": "Something went wrong. Please try again.",
-    "err_verification_expired": "Phone verification has expired. Please verify your number again.",
     "err_request_invalid": "The request could not be accepted. Please review your details and try again.",
     "err_photo_invalid": "The photo could not be accepted. Please use a JPEG, PNG or WebP image.",
-    "err_photo_too_large": "The photo is too large (maximum 5 MB). Please remove it or choose a smaller one.",
-    "err_daily_limit": "This number has reached the daily limit for requests. Please try again tomorrow."
+    "err_photo_too_large": "The photo is too large (maximum 5 MB). Please remove it or choose a smaller one."
   },
   "cep": {
     "hint": "Fills in the street and neighbourhood. Only the CEP is sent to a public postal-code service.",

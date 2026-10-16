@@ -79,8 +79,10 @@ export interface ServiceRequestListItem {
   contactName: string;
   contactEmail: string;
   contactPhone?: string | null;
-  /** Verified mobile number of an anonymous submitter; visible to administrators only. */
+  /** Verified mobile number of an anonymous submitter; visible to administrators only. Superseded by `verifiedContact`. */
   ownerPhone?: string | null;
+  /** What an anonymous submitter verified (phone or email); visible to administrators only. */
+  verifiedContact?: { channel: 'sms' | 'email'; value: string } | null;
   submittedBy?: 'user' | 'anonymous' | null;
   receiveUpdates: boolean;
   imagePath: string | null;

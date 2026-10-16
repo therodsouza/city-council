@@ -9,7 +9,8 @@ import StepIssue from './components/StepIssue';
 import StepContact from './components/StepContact';
 import StepReview from './components/StepReview';
 import SuccessScreen from './components/SuccessScreen';
-import { PhoneVerification, type PhoneVerificationResult } from './components/PhoneVerification';
+import { GuestVerification, type VerificationResult } from './components/GuestVerification';
+import { guestVerificationChannel } from './config/features';
 import {
   buildServiceRequestPayload,
   submitAnonymousServiceRequest,
@@ -56,7 +57,7 @@ export function ServiceRequestForm({ user, onProfileClick, onTrackClick, onMapCl
   const [photoUrl, setPhotoUrl] = useState('');
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   // The verification token is single-use and short-lived: keep it in memory only.
-  const [verification, setVerification] = useState<PhoneVerificationResult | null>(null);
+  const [verification, setVerification] = useState<VerificationResult | null>(null);
 
   const setVal = (key: keyof FormData, value: string | boolean) => {
     setForm(prev => ({ ...prev, [key]: value }));
@@ -142,7 +143,8 @@ export function ServiceRequestForm({ user, onProfileClick, onTrackClick, onMapCl
                   submitBlocked={isGuest && !verification}
                   guestVerification={
                     isGuest ? (
-                      <PhoneVerification
+                      <GuestVerification
+                        channel={guestVerificationChannel}
                         verified={verification}
                         onVerified={setVerification}
                         onClear={() => setVerification(null)}
@@ -153,7 +155,7 @@ export function ServiceRequestForm({ user, onProfileClick, onTrackClick, onMapCl
                     setSubmitError(null);
                     if (isGuest && (!verification || Date.now() >= verification.expiresAt)) {
                       setVerification(null);
-                      setSubmitError(t('anon.err_verification_expired'));
+                      setSubmitError(t(`anon.${guestVerificationChannel}.err_verification_expired`));
                       return;
                     }
                     setIsSubmitting(true);
@@ -169,7 +171,7 @@ export function ServiceRequestForm({ user, onProfileClick, onTrackClick, onMapCl
                       if (isGuest) {
                         // Only a 400/413 leaves the token usable; anything else spent it.
                         if (submitSpentToken(e)) setVerification(null);
-                        setSubmitError(anonymousSubmitErrorMessage(e, t));
+                        setSubmitError(anonymousSubmitErrorMessage(e, t, guestVerificationChannel));
                       } else {
                         setSubmitError(e instanceof Error ? e.message : t('common.submit_failed'));
                       }
