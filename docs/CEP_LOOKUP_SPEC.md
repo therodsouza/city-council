@@ -26,7 +26,7 @@ signed-in users alike. It needs no account, no API key and no backend change.
 - The street is filled without a number; focus moves to the address field with the
   cursor at the end so the person adds it (request form).
 - **Coordinates are not used.** A CEP can cover a street or a whole town, so it is not
-  the location of the issue; `location.lat/lng` stay "Use my location" only.
+  the location of the issue; the point (`location.coordinates`, type `custom`) stays "Use my location" only.
 - City and state are not stored: the form and the API contract have no city field.
 - A city-wide CEP has no street or neighbourhood to offer and shows the "enter it
   manually" message.

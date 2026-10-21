@@ -1,6 +1,6 @@
 # Geocoordinates Flow
 
-How a request's `lat`/`lng` are captured, sent, completed by the API and read back.
+How a request's point is captured, sent as `location.coordinates`, completed by the API and read back.
 Related: `docs/api-contract.md` (sections 1, 2, 8), `docs/ANONYMOUS_SUBMISSION_SPEC.md`,
 `docs/SERVICE_REQUEST_FORM_SPEC.md` (Step 1), `docs/REQUEST_MAP_SPEC.md`.
 
@@ -46,15 +46,15 @@ sequenceDiagram
         U->>F: verify phone (SMS + Turnstile)
         F->>A: POST /verification/phone/send + /confirm
         A-->>F: single-use token
-        F->>A: POST /anonymous/service-requests<br/>X-Verification-Token, data{lat?, lng?}, photo
+        F->>A: POST /anonymous/service-requests<br/>X-Verification-Token, data{coordinates}, photo
     else Signed in
-        F->>A: POST /service-requests (Bearer)<br/>data{lat?, lng?}, photo
+        F->>A: POST /service-requests (Bearer)<br/>data{coordinates}, photo
     end
 
-    Note over A: Anonymous path only, after validation,<br/>token spent and daily cap checked
-    alt lat/lng sent
-        Note over A: kept as sent, never replaced
-    else no lat/lng
+    Note over A: After validation; for guests also after the<br/>token is spent and the daily cap checked
+    alt coordinates.type = custom
+        Note over A: lat/lng kept as sent, never replaced
+    else coordinates.type = address (no pin)
         A->>G: forward geocode "address, suburb, CEP, Brasil"<br/>(components=country:BR)
         G-->>A: point + location_type
         alt ROOFTOP / RANGE_INTERPOLATED / GEOMETRIC_CENTER
