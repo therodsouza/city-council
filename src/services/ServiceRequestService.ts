@@ -3,14 +3,25 @@ import { authenticationService } from './AuthenticationService';
 import { ApiError, toApiError } from './ApiError';
 import type { Severity, Status } from '../components/requestUi';
 
+/**
+ * How the API obtains the point of a request (`location.coordinates`):
+ * - `custom`: the point the person chose, from "Use my location" or a pin on the map;
+ * - `venue`: a predefined sports venue; the API copies its point and address, so the address
+ *   fields of the location must then be empty;
+ * - `address`: no point of our own, the API locates the typed address (best effort).
+ */
+export type GeoSource =
+  | { type: 'custom'; lat: number; lng: number }
+  | { type: 'venue'; venueId: string }
+  | { type: 'address' };
+
 export interface ServiceRequestPayload {
   submittedAt: string;
   location: {
+    coordinates: GeoSource;
     address: string;
     suburb: string;
     postcode: string;
-    lat?: number;
-    lng?: number;
     siteType: string;
     notes: string;
   };
@@ -34,12 +45,12 @@ export function buildServiceRequestPayload(
   return {
     submittedAt: new Date().toISOString(),
     location: {
+      coordinates: form.lat !== undefined && form.lng !== undefined
+        ? { type: 'custom', lat: form.lat, lng: form.lng }
+        : { type: 'address' },
       address: form.address,
       suburb: form.suburb,
       postcode: form.postcode,
-      ...(form.lat !== undefined && form.lng !== undefined
-        ? { lat: form.lat, lng: form.lng }
-        : {}),
       siteType: form.siteType,
       notes: form.locationNote,
     },

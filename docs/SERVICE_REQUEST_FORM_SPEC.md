@@ -229,8 +229,8 @@ className="border-border bg-white text-muted-foreground
 - The map (`LocationPicker`) lets anyone click to place the pin or drag it to adjust. It is
   hidden when `VITE_GOOGLE_MAPS_API_KEY` is not set.
 - A status line says whether the pin came from GPS (with its accuracy) or was set by hand, and
-  offers "Remove pin". The pin is optional: `lat`/`lng` are sent only when it is set, and for
-  guests the server falls back to locating the typed address.
+  offers "Remove pin". The pin is optional: it is sent as `location.coordinates = {type: "custom", lat, lng}`
+  when set, and as `{type: "address"}` when not, which asks the server to locate the typed address.
 - The pin never overwrites what was typed, and typing never moves the pin.
 
 **Fields:**

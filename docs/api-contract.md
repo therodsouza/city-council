@@ -94,8 +94,7 @@ Content-Type: multipart/form-data
     "address": "42 Harbour Road",
     "suburb": "Northbridge",
     "postcode": "6003",
-    "lat": -31.9505,
-    "lng": 115.8605,
+    "coordinates": { "type": "custom", "lat": -31.9505, "lng": 115.8605 },
     "siteType": "Road / Street",
     "notes": "Adjacent to the bus shelter on the eastern footpath."
   },
@@ -116,7 +115,7 @@ Content-Type: multipart/form-data
 
 `submittedAt` — ISO 8601 UTC timestamp of when the user clicked Submit.
 
-`location.lat` / `location.lng` — Optional. Decimal-degree coordinates. Present when the user clicked "Use my location"; absent for manual address entry. Used for geospatial indexing.
+`location.coordinates` — Optional. How the point on the map is obtained; an object whose `type` is one of: `custom` (`lat` and `lng`, decimal degrees: "Use my location" or a pin on the map), `venue` (`venueId` of a sports venue: the server copies its point and address, so `address`, `suburb` and `postcode` must then be blank) or `address` (no fields: the server locates the typed address, best effort). Omitted means no point. The old flat `location.lat` / `location.lng` are no longer read.
 
 `location.siteType` — One of the values below (free-text string, validated by the frontend):
 - `Road / Street`
@@ -485,12 +484,12 @@ Content-Type: multipart/form-data
 | Field                      | Rule |
 |----------------------------|------|
 | `submittedAt`              | required |
-| `location.address`         | required **unless `lat`/`lng` are sent**, up to 300 characters |
+| `location.address`         | up to 300 characters; required for `address` and when `coordinates` is omitted, optional for `custom`, must be blank for `venue` |
 | `location.suburb`          | up to 100 characters |
 | `location.postcode`        | up to 20 characters |
 | `location.siteType`        | up to 100 characters |
 | `location.notes`           | up to 1000 characters |
-| `location.lat` / `lng`     | both or neither; within −90…90 and −180…180 |
+| `location.coordinates`     | optional; `custom` needs both `lat` and `lng` (within −90…90 and −180…180), `venue` needs `venueId` |
 | `issue.category`           | required, one of the values in section 2 |
 | `issue.severity`           | not accepted; ignored if sent (see section 2) |
 | `issue.description`        | required, up to 2000 characters |
@@ -500,9 +499,9 @@ Content-Type: multipart/form-data
 
 - The `photo` must be a **JPEG, PNG or WebP** of at most **5 MB**, and its content must really be that type. Other types and renamed files are rejected.
 
-**Address from coordinates.** There is no public reverse-geocoding endpoint (section 1 needs a login). Instead, send `location.lat` and `location.lng` and leave `address`, `suburb` and `postcode` blank: the server looks them up after the phone verification has passed and stores what it finds. Anything the person typed is kept as typed; only blank fields are filled. This is best effort. If the lookup finds nothing or the provider is down, the request is still created with the blank fields stored as empty strings and the coordinates intact, so the form cannot count on the address being filled in. The response does not echo the address.
+**Address from coordinates.** There is no public reverse-geocoding endpoint (section 1 needs a login). Instead, send a `custom` `location.coordinates` and leave `address`, `suburb` and `postcode` blank: the server looks them up after the phone verification has passed and stores what it finds. Anything the person typed is kept as typed; only blank fields are filled. This is best effort. If the lookup finds nothing or the provider is down, the request is still created with the blank fields stored as empty strings and the coordinates intact, so the form cannot count on the address being filled in. The response does not echo the address.
 
-**Coordinates from the address.** The opposite fallback: when `location.lat` and `location.lng` are missing, the server looks up the typed address (street, neighbourhood and CEP, restricted to Brazil) after the phone verification has passed, and stores the coordinates it finds. Coordinates the person sent, whether from "Use my location" or a pin placed on the map, are never replaced. This is best effort. Only street-level or better results are used; a result that only identifies a city or region is discarded. If nothing usable is found or the provider is down, the request is still created, without coordinates. The response does not echo them.
+**Coordinates from the address.** The opposite lookup, asked for with `"coordinates": { "type": "address" }`: the server looks up the typed address (street, neighbourhood and CEP, restricted to Brazil) after the phone verification has passed, and stores the coordinates it finds. A `custom` point, whether from "Use my location" or a pin placed on the map, is never replaced. This is best effort. Only street-level or better results are used; a result that only identifies a city or region is discarded. If nothing usable is found or the provider is down, the request is still created, without coordinates. The response does not echo them.
 
 **Success response — `201 Created`**
 
